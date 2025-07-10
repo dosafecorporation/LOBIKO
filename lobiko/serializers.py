@@ -1,13 +1,8 @@
 from rest_framework import serializers
 from .models import (
-    CompteWhatsApp, Patient, Assureur, Assurance,
+    Patient, Assureur, Assurance,
     SessionDiscussion, Message, Medecin
 )
-
-class CompteWhatsAppSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CompteWhatsApp
-        fields = '__all__'
 
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:

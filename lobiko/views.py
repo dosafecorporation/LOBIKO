@@ -1,17 +1,13 @@
 from rest_framework import viewsets
 from .models import (
-    CompteWhatsApp, Patient, Assureur, Assurance,
+    Patient, Assureur, Assurance,
     SessionDiscussion, Message, Medecin
 )
 from .serializers import (
-    CompteWhatsAppSerializer, PatientSerializer, AssureurSerializer,
+    PatientSerializer, AssureurSerializer,
     AssuranceSerializer, SessionDiscussionSerializer, MessageSerializer,
     MedecinSerializer
 )
-
-class CompteWhatsAppViewSet(viewsets.ModelViewSet):
-    queryset = CompteWhatsApp.objects.all()
-    serializer_class = CompteWhatsAppSerializer
 
 class PatientViewSet(viewsets.ModelViewSet):
     queryset = Patient.objects.all()
