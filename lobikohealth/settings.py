@@ -129,3 +129,9 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.BrowsableAPIRenderer',  # ← permet l'interface web de test
     )
 }
+
+CSRF_TRUSTED_ORIGINS = ['https://lobiko.onrender.com']
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
