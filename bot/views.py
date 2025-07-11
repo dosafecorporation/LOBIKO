@@ -106,7 +106,7 @@ def webhook(request):
                     Message.objects.create(
                         session=session_active,
                         contenu=content,
-                        emetteur='patient',
+                        emetteur='Patient',
                         patient=patient,
                         timestamp=now_ts
                     )
@@ -259,7 +259,7 @@ def recevoir_message_medecin(request):
     Message.objects.create(
         session=session,
         contenu=contenu,
-        emetteur='medecin',
+        emetteur='Médecin',
         medecin=medecin,
         timestamp=now()
     )
