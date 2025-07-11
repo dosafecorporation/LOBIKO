@@ -78,6 +78,7 @@ def webhook(request):
                 return JsonResponse({"status": "missing from or content"})
 
             logger.info(f"Message reçu de {from_number}: {content}")
+            state = users_state.get(from_number)
 
             # Gestion session expiration 1h
             now_ts = now()
