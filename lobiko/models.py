@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Patient(models.Model):
     whatsapp_id = models.CharField(max_length=100, unique=True)
@@ -32,6 +33,7 @@ class Assurance(models.Model):
     date_fin = models.DateField(null=True, blank=True)
 
 class Medecin(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     nom = models.CharField(max_length=100)
     postnom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)

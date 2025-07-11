@@ -1,0 +1,42 @@
+body {
+  font-family: Arial;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+h2, h3 {
+  color: #007bff;
+}
+
+.chat-box {
+  border: 1px solid #ddd;
+  padding: 10px;
+  height: 300px;
+  overflow-y: scroll;
+  background: white;
+  margin-bottom: 20px;
+}
+
+.bot, .patient {
+  background: #eee;
+  padding: 5px;
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+.medecin {
+  background: #d1e7dd;
+  padding: 5px;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  text-align: right;
+}
+
+.box {
+  width: 300px;
+  margin: auto;
+  padding: 20px;
+  background: white;
+  box-shadow: 0 0 5px #ccc;
+  margin-top: 100px;
+}

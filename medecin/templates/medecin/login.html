@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Connexion Médecin</title>
+  <link rel="stylesheet" href="{% static 'medecins/style.css' %}">
+</head>
+<body>
+  <div class="box">
+    <h2>Connexion Médecin</h2>
+    <form method="post">{% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Se connecter</button>
+    </form>
+  </div>
+</body>
+</html>

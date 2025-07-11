@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Détail Session</title>
+  <link rel="stylesheet" href="{% static 'medecins/style.css' %}">
+</head>
+<body>
+  <a href="{% url 'medecins:dashboard' %}">⬅ Retour</a>
+  <h2>Discussion avec {{ session.patient.nom }}</h2>
+
+  <div class="chat-box">
+    {% for msg in messages %}
+      <div class="{{ msg.emetteur }}">
+        <strong>{{ msg.emetteur|capfirst }}</strong> : {{ msg.contenu }}
+      </div>
+    {% endfor %}
+  </div>
+
+  <form method="post" action="{% url 'medecins:send_message' session.id %}">
+    {% csrf_token %}
+    <input type="text" name="contenu" placeholder="Votre message...">
+    <button type="submit">Envoyer</button>
+  </form>
+
+  <form method="post" action="{% url 'medecins:close_session' session.id %}">
+    {% csrf_token %}
+    <button type="submit" class="btn-close">Clôturer la session</button>
+  </form>
+</body>
+</html>

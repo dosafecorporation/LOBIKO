@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard Médecin</title>
+  <link rel="stylesheet" href="{% static 'medecins/style.css' %}">
+</head>
+<body>
+  <h2>Bienvenue Dr. {{ medecin.nom }}</h2>
+  <a href="{% url 'medecins:logout' %}">Se déconnecter</a>
+
+  <h3>Sessions actives</h3>
+  <ul>
+    {% for session in sessions %}
+      <li>
+        <a href="{% url 'medecins:session_detail' session.id %}">
+          Discussion avec {{ session.patient.nom }} {{ session.patient.prenom }}
+        </a>
+      </li>
+    {% empty %}
+      <li>Aucune session en cours.</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
