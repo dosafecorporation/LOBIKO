@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.utils.timezone import now
 from datetime import timedelta
-from lobiko.models import Patient
+from lobiko.models import Patient, SessionDiscussion
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -103,27 +103,30 @@ def webhook(request):
                 return JsonResponse({"status": "db error"})
 
             # Gestion conversation en fonction du state
-            if patient:
-                state = users_state.get(from_number)
-                if state and state.get('step') == 'awaiting_medecin_confirmation':
-                    rep = content.lower()
-                    if rep == 'oui':
-                        send_reply(from_number, "✅ Parfait. Un médecin va bientôt vous répondre, merci de patienter.")
-                        users_state.pop(from_number, None)
-                    elif rep == 'non':
-                        send_reply(from_number, "🛑 Pas de souci. N'hésitez pas à revenir quand vous le souhaitez.")
-                        users_state.pop(from_number, None)
-                    else:
-                        send_reply(from_number, "❓ Merci de répondre par 'oui' ou 'non'. Souhaitez-vous parler à un médecin maintenant ?")
-                    return JsonResponse({"status": "handled medecin confirmation"})
+            if state and state.get('step') == 'awaiting_medecin_confirmation':
+                rep = content.lower()
+                if rep == 'oui':
+                    try:
+                        # Vérifie s'il n'y a pas déjà une session en attente
+                        session_existante = SessionDiscussion.objects.filter(
+                            patient=patient, date_fin__isnull=True
+                        ).exists()
 
-                # Si pas de state, commencer confirmation
-                users_state[from_number] = {
-                    'step': 'awaiting_medecin_confirmation',
-                    'last_updated': now_ts
-                }
-                send_reply(from_number, f"👋 Bonjour {patient.nom}, ravi de vous revoir !\nSouhaitez-vous parler à un médecin maintenant ? (oui / non)")
-                return JsonResponse({"status": "ask medecin confirmation"})
+                        if not session_existante:
+                            SessionDiscussion.objects.create(patient=patient)
+                            send_reply(from_number, "✅ Parfait. Un médecin va bientôt vous répondre, merci de patienter.")
+                        else:
+                            send_reply(from_number, "🔁 Une demande est déjà en attente. Un médecin va vous répondre bientôt.")
+                    except Exception as e:
+                        logger.error(f"Erreur création session: {e}")
+                        send_reply(from_number, "❌ Une erreur est survenue. Merci de réessayer plus tard.")
+                    users_state.pop(from_number, None)
+                elif rep == 'non':
+                    send_reply(from_number, "🛑 Pas de souci. N'hésitez pas à revenir quand vous le souhaitez.")
+                    users_state.pop(from_number, None)
+                else:
+                    send_reply(from_number, "❓ Merci de répondre par 'oui' ou 'non'. Souhaitez-vous parler à un médecin maintenant ?")
+                return JsonResponse({"status": "handled medecin confirmation"})
 
             # Début inscription
             state = users_state.get(from_number)
