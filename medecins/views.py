@@ -29,7 +29,7 @@ def login_medecin(request):
             try:
                 medecin = Medecin.objects.get(username=username)
                 if medecin.check_password(password):
-                    request.session['medecin_id'] = medecin.id  # Auth "maison"
+                    request.session['medecin_id'] = medecin.id
                     return redirect('dashboard_medecin')
                 else:
                     messages.error(request, "Mot de passe incorrect.")

@@ -21,7 +21,7 @@
     <h1>Bienvenue Dr. {{ medecin.prenom }} {{ medecin.nom }}</h1>
     <p>Vous êtes connecté au dashboard médecin.</p>
     <h2>👨‍⚕️ Sessions en attente d’un médecin</h2>
-    {% if sessions %}
+    {% if sessions_en_attente %}
     <table>
         <thead>
             <tr>
@@ -32,13 +32,13 @@
             </tr>
         </thead>
         <tbody>
-            {% for session in sessions %}
+            {% for session_en_attente in sessions_en_attente %}
             <tr>
-                <td>{{ session.patient.prenom }} {{ session.patient.nom }} {{ session.patient.postnom }}</td>
-                <td>{{ session.patient.langue_preferee }}</td>
-                <td>{{ session.date_debut }}</td>
+                <td>{{ session_en_attente.patient.prenom }} {{ session_en_attente.patient.nom }} {{ session_en_attente.patient.postnom }}</td>
+                <td>{{ session_en_attente.patient.langue_preferee }}</td>
+                <td>{{ session_en_attente.date_debut }}</td>
                 <td>
-                    <a href="{% url 'accepter_session' session.id %}" class="btn">Accepter</a>
+                    <a href="{% url 'accepter_session' session_en_attente.id %}" class="btn">Accepter</a>
                 </td>
             </tr>
             {% endfor %}
