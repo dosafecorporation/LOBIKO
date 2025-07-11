@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password, check_password
 
 class Patient(models.Model):
     whatsapp_id = models.CharField(max_length=100, unique=True)
@@ -33,7 +33,8 @@ class Assurance(models.Model):
     date_fin = models.DateField(null=True, blank=True)
 
 class Medecin(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    username = models.CharField(max_length=150, unique=True)
+    password = models.CharField(max_length=128)  # mot de passe hashé
     nom = models.CharField(max_length=100)
     postnom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
@@ -43,9 +44,18 @@ class Medecin(models.Model):
     etat_civil = models.CharField(max_length=50)
     telephone = models.CharField(max_length=20, unique=True)
     adresse = models.TextField()
-    cnom = models.CharField(max_length=100)  # numéro d'enregistrement CNOM
+    cnom = models.CharField(max_length=100)
     langues = models.CharField(max_length=200)
-    specialite = models.CharField(max_length=100)  # ou 'Généraliste'
+    specialite = models.CharField(max_length=100)
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
+
+    def __str__(self):
+        return f"{self.nom} {self.postnom} ({self.username})"
 
 class SessionDiscussion(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)

@@ -1,42 +1,36 @@
 body {
-  font-family: Arial;
-  padding: 20px;
-  background-color: #f8f9fa;
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
 }
 
-h2, h3 {
-  color: #007bff;
+.login-container {
+    width: 350px;
+    margin: 60px auto;
+    padding: 25px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
 }
 
-.chat-box {
-  border: 1px solid #ddd;
-  padding: 10px;
-  height: 300px;
-  overflow-y: scroll;
-  background: white;
-  margin-bottom: 20px;
+.login-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.bot, .patient {
-  background: #eee;
-  padding: 5px;
-  margin-bottom: 5px;
-  border-radius: 5px;
+form button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    background-color: #0c7d75;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
 }
 
-.medecin {
-  background: #d1e7dd;
-  padding: 5px;
-  margin-bottom: 5px;
-  border-radius: 5px;
-  text-align: right;
-}
-
-.box {
-  width: 300px;
-  margin: auto;
-  padding: 20px;
-  background: white;
-  box-shadow: 0 0 5px #ccc;
-  margin-top: 100px;
+.messages {
+    padding: 10px;
+    background-color: #ffcaca;
+    border-radius: 5px;
+    margin-bottom: 15px;
 }

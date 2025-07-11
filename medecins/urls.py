@@ -1,13 +1,9 @@
 from django.urls import path
 from . import views
 
-app_name = 'medecins'
-
 urlpatterns = [
-    path('login/', views.login_view, name='login'),
-    path('logout/', views.logout_view, name='logout'),
-    path('dashboard/', views.dashboard, name='dashboard'),
-    path('session/<int:session_id>/', views.session_detail, name='session_detail'),
-    path('session/<int:session_id>/send/', views.send_message, name='send_message'),
-    path('session/<int:session_id>/close/', views.close_session, name='close_session'),
+    path('inscription/', views.inscription_medecin, name='inscription_medecin'),
+    path('login/', views.login_medecin, name='login_medecin'),
+    path('logout/', views.logout_medecin, name='logout_medecin'),
+    path('dashboard/', views.dashboard_medecin, name='dashboard_medecin'),
 ]
