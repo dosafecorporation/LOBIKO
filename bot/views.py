@@ -11,9 +11,9 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 # Configuration (mettre dans settings.py)
-verify_token = settings.VERIFY_TOKEN
-access_token = settings.ACCESS_TOKEN
-phone_number_id = settings.PHONE_NUMBER_ID
+VERIFY_TOKEN = settings.VERIFY_TOKEN
+ACCESS_TOKEN = settings.ACCESS_TOKEN
+PHONE_NUMBER_ID = settings.PHONE_NUMBER_ID
 
 # Stockage simple en mémoire (attention : multi-processes ou déploiement multi-instance => envisager cache redis)
 users_state = {}
