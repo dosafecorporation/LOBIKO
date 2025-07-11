@@ -44,3 +44,14 @@ class MedecinInscriptionForm(forms.ModelForm):
         if commit:
             medecin.save()
         return medecin
+    
+class MessageForm(forms.Form):
+    message = forms.CharField(
+        label="Message",
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': "Écrivez votre message ici..."
+        }),
+        required=True
+    )

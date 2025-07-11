@@ -2,10 +2,11 @@ import json
 import requests
 import logging
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.utils.timezone import now
 from datetime import timedelta
-from lobiko.models import Patient, SessionDiscussion
+from lobiko.models import Medecin, Message, Patient, SessionDiscussion
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,31 @@ def webhook(request):
                 logger.error(f"Erreur DB: {e}")
                 send_reply(from_number, "Désolé, une erreur est survenue lors de la vérification du compte.")
                 return JsonResponse({"status": "db error"})
+
+            if patient:
+                try:
+                    session_active = SessionDiscussion.objects.filter(
+                        patient=patient,
+                        date_fin__isnull=True,
+                        medecin__isnull=False
+                    ).latest('date_debut')  # on prend la plus récente
+                except SessionDiscussion.DoesNotExist:
+                    session_active = None
+
+                if session_active:
+                    # Sauvegarde le message dans la BDD
+                    Message.objects.create(
+                        session=session_active,
+                        contenu=content,
+                        emetteur='patient',
+                        patient=patient,
+                        timestamp=now()
+                    )
+
+                    # À ce stade, le médecin verra ce message depuis son interface automatiquement.
+                    # (optionnel) Tu pourrais aussi ajouter un système de "notification visuelle" plus tard.
+
+                    return JsonResponse({"status": "message saved from patient"})
 
             # Gestion conversation en fonction du state
             if state and state.get('step') == 'awaiting_medecin_confirmation':
@@ -221,3 +247,41 @@ def webhook(request):
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
     return HttpResponse(status=405)
+
+@csrf_exempt
+def recevoir_message_medecin(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "invalid method"}, status=405)
+
+    data = request.POST
+    session_id = data.get('session_id')
+    medecin_id = data.get('medecin_id')
+    contenu = data.get('message', '').strip()
+
+    if not session_id or not medecin_id or not contenu:
+        return JsonResponse({"status": "missing fields"}, status=400)
+
+    try:
+        session = SessionDiscussion.objects.get(id=session_id)
+        medecin = Medecin.objects.get(id=medecin_id)
+    except (SessionDiscussion.DoesNotExist, Medecin.DoesNotExist):
+        return JsonResponse({"status": "invalid session or medecin"}, status=404)
+
+    # Vérifie que ce médecin est bien affecté à cette session
+    if session.medecin != medecin:
+        return JsonResponse({"status": "unauthorized"}, status=403)
+
+    # Sauvegarde le message
+    Message.objects.create(
+        session=session,
+        contenu=contenu,
+        emetteur='medecin',
+        medecin=medecin,
+        timestamp=now()
+    )
+
+    # Envoie au patient
+    numero = session.patient.telephone
+    send_reply(numero, contenu)
+
+    return JsonResponse({"status": "ok"})

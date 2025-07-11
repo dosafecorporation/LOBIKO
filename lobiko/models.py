@@ -65,6 +65,20 @@ class SessionDiscussion(models.Model):
 
 class Message(models.Model):
     session = models.ForeignKey(SessionDiscussion, on_delete=models.CASCADE)
-    emetteur = models.CharField(max_length=20)  # "patient", "bot", "medecin"
     contenu = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    # Émetteur (un seul des trois peut être non nul)
+    emetteur_patient = models.ForeignKey(Patient, null=True, blank=True, on_delete=models.SET_NULL)
+    emetteur_medecin = models.ForeignKey(Medecin, null=True, blank=True, on_delete=models.SET_NULL)
+    emetteur_bot = models.BooleanField(default=False)
+
+    def get_emetteur(self):
+        if self.emetteur_patient:
+            return f"Patient: {self.emetteur_patient.nom}"
+        elif self.emetteur_medecin:
+            return f"Médecin: {self.emetteur_medecin.nom}"
+        elif self.emetteur_bot:
+            return "Bot"
+        else:
+            return "Inconnu"
