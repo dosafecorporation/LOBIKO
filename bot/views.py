@@ -259,7 +259,7 @@ def recevoir_message_medecin(request):
         session=session,
         contenu=contenu,
         timestamp=now(),
-        emetteur_medecin=medecin_id
+        emetteur_medecin=medecin
     )
 
     # Envoie au patient
