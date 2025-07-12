@@ -106,9 +106,8 @@ def webhook(request):
                     Message.objects.create(
                         session=session_active,
                         contenu=content,
-                        emetteur='Patient',
-                        patient=patient,
-                        timestamp=now_ts
+                        timestamp=now_ts,
+                        emetteur_patient=patient,                       
                     )
                     return JsonResponse({"status": "message saved from patient"})
 
@@ -259,9 +258,8 @@ def recevoir_message_medecin(request):
     Message.objects.create(
         session=session,
         contenu=contenu,
-        emetteur='Médecin',
-        medecin=medecin,
-        timestamp=now()
+        timestamp=now(),
+        emetteur_medecin=medecin_id
     )
 
     # Envoie au patient
