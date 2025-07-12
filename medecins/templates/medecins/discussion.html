@@ -26,7 +26,7 @@
 
     <div class="border p-3 mb-4" style="height: 400px; overflow-y: auto; background-color: #f8f9fa;">
         {% for msg in messages %}
-            {% if msg.emetteur == 'medecin' %}
+            {% if msg.emetteur_medecin %}
                 <div class="text-end mb-2">
                     <span class="badge bg-primary">Vous</span><br>
                     <div class="alert alert-primary d-inline-block">
@@ -34,18 +34,26 @@
                         <br><small class="text-muted">{{ msg.timestamp|date:"H:i d/m/Y" }}</small>
                     </div>
                 </div>
-            {% elif msg.emetteur == 'patient' %}
+            {% elif msg.emetteur_patient %}
                 <div class="text-start mb-2">
-                    <span class="badge bg-success">{{ session.patient.prenom }}</span><br>
+                    <span class="badge bg-success">{{ msg.emetteur_patient.prenom }}</span><br>
                     <div class="alert alert-success d-inline-block">
                         {{ msg.contenu|linebreaksbr }}
                         <br><small class="text-muted">{{ msg.timestamp|date:"H:i d/m/Y" }}</small>
                     </div>
                 </div>
-            {% else %}
+            {% elif msg.emetteur_bot %}
                 <div class="text-center mb-2">
                     <span class="badge bg-secondary">Bot</span><br>
                     <div class="alert alert-secondary d-inline-block">
+                        {{ msg.contenu|linebreaksbr }}
+                        <br><small class="text-muted">{{ msg.timestamp|date:"H:i d/m/Y" }}</small>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center mb-2 text-danger">
+                    <small>Message d’origine inconnue</small><br>
+                    <div class="alert alert-warning d-inline-block">
                         {{ msg.contenu|linebreaksbr }}
                         <br><small class="text-muted">{{ msg.timestamp|date:"H:i d/m/Y" }}</small>
                     </div>
