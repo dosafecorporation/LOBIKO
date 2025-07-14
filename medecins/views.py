@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 import requests
+from django.contrib import messages as django_messages
 from .forms import MedecinInscriptionForm, MedecinLoginForm, MessageForm
 from lobiko.models import Medecin, Message, SessionDiscussion  # Tu l’as bien précisé : il est dans l'app lobiko
 
@@ -86,6 +87,7 @@ def accepter_session(request, session_id):
     return redirect('dashboard_medecin')
 
 def discussion_session(request, session_id):
+    # Vérification de l'authentification
     medecin_id = request.session.get('medecin_id')
     if not medecin_id:
         return redirect('login_medecin')
@@ -93,43 +95,84 @@ def discussion_session(request, session_id):
     medecin = get_object_or_404(Medecin, id=medecin_id)
     session = get_object_or_404(SessionDiscussion, id=session_id)
 
-    # Vérifie que le médecin est bien celui de la session
-    if session.medecin != medecin:
+    # Vérification des permissions
+    if session.medecin and session.medecin != medecin:
         return redirect('dashboard_medecin')
 
-    messages = Message.objects.filter(session=session).order_by('timestamp')
-    form = MessageForm()
+    # Récupération des messages et initialisation du formulaire
+    messages_list = Message.objects.filter(session=session).order_by('timestamp')
+    form = MessageForm(request.POST or None)
 
     if request.method == "POST":
-        # Si le bouton "Terminer la session" est cliqué
+        # Gestion de la fermeture de session
         if 'close_session' in request.POST:
             session.date_fin = timezone.now()
             session.save()
-            return redirect('dashboard_medecin')
-
-        form = MessageForm(request.POST)
-        if form.is_valid():
-            message_texte = form.cleaned_data['message']
-
-            # Envoi au bot
+            
+            # Envoi notification au patient
             bot_url = request.build_absolute_uri(reverse('bot:recevoir_message_medecin'))
-            data = {
+            notification_data = {
                 'medecin_id': medecin_id,
                 'session_id': session_id,
-                'message': message_texte
+                'message': "Le médecin a clôturé la consultation.",
+                'is_notification': True
             }
             try:
-                response = requests.post(bot_url, data=data)
-                if response.status_code == 200:
-                    return redirect('discussion_session', session_id=session_id)
-                else:
-                    form.add_error(None, "Erreur lors de l'envoi au bot.")
-            except Exception as e:
-                form.add_error(None, f"Échec de la communication avec le bot : {str(e)}")
+                requests.post(bot_url, json=notification_data, timeout=5)
+            except requests.RequestException:
+                pass  # On continue même si l'envoi échoue
+            
+            django_messages.success(request, "La session a été clôturée.")
+            return redirect('dashboard_medecin')
+
+        # Gestion de l'envoi de message
+        if form.is_valid():
+            message_content = form.cleaned_data['message']
+            
+            # Création du message en base de données
+            new_message = Message.objects.create(
+                session=session,
+                contenu=message_content,
+                emetteur_medecin=medecin,
+                emetteur_type='MEDECIN',
+                emetteur_id=medecin.id
+            )
+
+            # Envoi au bot via webhook
+            bot_url = request.build_absolute_uri(reverse('bot:recevoir_message_medecin'))
+            message_data = {
+                'medecin_id': medecin_id,
+                'session_id': session_id,
+                'message': message_content,
+                'message_id': new_message.id,
+                'timestamp': new_message.timestamp.isoformat()
+            }
+
+            try:
+                response = requests.post(
+                    bot_url,
+                    json=message_data,
+                    headers={'Content-Type': 'application/json'},
+                    timeout=10  # Timeout de 10 secondes
+                )
+                
+                if response.status_code != 200:
+                    raise requests.RequestException(f"Code {response.status_code}: {response.text}")
+                
+                django_messages.success(request, "Message envoyé avec succès.")
+                return redirect('discussion_session', session_id=session_id)
+
+            except requests.RequestException as e:
+                # On garde le message même si l'envoi échoue
+                django_messages.error(
+                    request, 
+                    f"Message enregistré mais erreur lors de l'envoi au patient: {str(e)}"
+                )
+                return redirect('discussion_session', session_id=session_id)
 
     return render(request, 'medecins/discussion.html', {
         'medecin': medecin,
         'session': session,
-        'messages': messages,
+        'messages': messages_list,
         'form': form,
     })
