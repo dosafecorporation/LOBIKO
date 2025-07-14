@@ -1,6 +1,13 @@
 from django import forms
-
 from lobiko.models import Medecin
+
+LANGUE_CHOICES = [
+    ('fr', 'Français'),
+    ('en', 'Anglais'),
+    ('sw', 'Swahili'),
+    ('ln', 'Lingala'),
+    ('kg', 'Kikongo'),
+]
 
 class MedecinLoginForm(forms.Form):
     username = forms.CharField(label="Nom d'utilisateur", max_length=150, widget=forms.TextInput(attrs={
@@ -19,13 +26,23 @@ class MedecinInscriptionForm(forms.ModelForm):
         label="Date de naissance"
     )
 
+    langues = forms.MultipleChoiceField(
+        choices=LANGUE_CHOICES,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'form-control select2',
+            'multiple': 'multiple'
+        }),
+        label="Langues parlées",
+        required=False
+    )
+
     class Meta:
         model = Medecin
         fields = [
             'username', 'password', 'confirm_password',
             'nom', 'postnom', 'prenom', 'sexe',
             'date_naissance', 'etat_civil', 'telephone',
-            'adresse', 'cnom', 'langues', 'specialite'
+            'commune', 'quartier', 'avenue', 'cnom', 'langues', 'specialite'
         ]
 
     def clean(self):
@@ -41,10 +58,12 @@ class MedecinInscriptionForm(forms.ModelForm):
     def save(self, commit=True):
         medecin = super().save(commit=False)
         medecin.set_password(self.cleaned_data["password"])
+        # Convertir en liste JSON (utile si l'utilisateur n’a rien sélectionné)
+        medecin.langues = self.cleaned_data.get('langues', [])
         if commit:
             medecin.save()
         return medecin
-    
+
 class MessageForm(forms.Form):
     message = forms.CharField(
         label="Message",

@@ -11,16 +11,37 @@ class Patient(models.Model):
     date_naissance = models.DateField()
     etat_civil = models.CharField(max_length=50)
     telephone = models.CharField(max_length=20, unique=True)
-    adresse = models.TextField()
-    LANGUE_CHOICES = [
-        ('Français', 'Français'),
-        ('Anglais', 'Anglais'),
-        ('Lingala', 'Lingala'),
-        ('Swahili', 'Swahili'),
-        ('Kikongo', 'Kikongo'),
-        ('Tshiluba', 'Tshiluba')
-    ]
-    langue_preferee = models.CharField(max_length=50, choices=LANGUE_CHOICES)
+    COMMUNE_CHOICES = [
+    ('Barumbu', 'Barumbu'),
+    ('Bumbu', 'Bumbu'),
+    ('Kalamu', 'Kalamu'),
+    ('Kasa-Vubu', 'Kasa-Vubu'),
+    ('Kinshasa', 'Kinshasa'),
+    ('Kintambo', 'Kintambo'),
+    ('Lingwala', 'Lingwala'),
+    ('Gombe', 'Gombe'),
+    ('Ngaliema', 'Ngaliema'),
+    ('Mont Ngafula', 'Mont Ngafula'),
+    ('Lemba', 'Lemba'),
+    ('Ngaba', 'Ngaba'),
+    ('Matete', 'Matete'),
+    ('Kisenso', 'Kisenso'),
+    ('Kimbanseke', 'Kimbanseke'),
+    ('Nsele', 'Nsele'),
+    ('Maluku', 'Maluku'),
+    ('Masina', 'Masina'),
+    ('Ndjili', 'Ndjili'),
+    ('N’djili', 'N’djili'),
+    ('Limete', 'Limete'),
+    ('Selembao', 'Selembao'),
+    ('Makala', 'Makala'),
+    ('Kasavubu', 'Kasavubu'),
+    ('Bandalungwa', 'Bandalungwa')]
+    commune=models.CharField(max_length=100, choices=COMMUNE_CHOICES,null=True)
+    quartier= models.CharField(max_length=100,null=True)
+    avenue = models.CharField(max_length=100, null=True)
+    
+    langue_preferee = models.JSONField(null=True, blank=True, default=list)
 
 class Assureur(models.Model):
     nom = models.CharField(max_length=100)
@@ -41,12 +62,75 @@ class Medecin(models.Model):
     SEXE_CHOICES = [('Homme', 'Homme'), ('Femme', 'Femme')]
     sexe = models.CharField(max_length=10, choices=SEXE_CHOICES)
     date_naissance = models.DateField()
-    etat_civil = models.CharField(max_length=50)
+    ETAT_CIVIL_CHOICES = [
+    ('Célibataire', 'Célibataire'),
+    ('Marié(e)', 'Marié(e)'),
+    ('Divorcé(e)', 'Divorcé(e)'),
+    ('Veuf(ve)', 'Veuf(ve)'),
+    ('Union libre', 'Union libre')]
+
+    etat_civil=models.CharField(max_length=20, choices=ETAT_CIVIL_CHOICES)
     telephone = models.CharField(max_length=20, unique=True)
-    adresse = models.TextField()
+    COMMUNE_CHOICES = [
+    ('Barumbu', 'Barumbu'),
+    ('Bumbu', 'Bumbu'),
+    ('Kalamu', 'Kalamu'),
+    ('Kasa-Vubu', 'Kasa-Vubu'),
+    ('Kinshasa', 'Kinshasa'),
+    ('Kintambo', 'Kintambo'),
+    ('Lingwala', 'Lingwala'),
+    ('Gombe', 'Gombe'),
+    ('Ngaliema', 'Ngaliema'),
+    ('Mont Ngafula', 'Mont Ngafula'),
+    ('Lemba', 'Lemba'),
+    ('Ngaba', 'Ngaba'),
+    ('Matete', 'Matete'),
+    ('Kisenso', 'Kisenso'),
+    ('Kimbanseke', 'Kimbanseke'),
+    ('Nsele', 'Nsele'),
+    ('Maluku', 'Maluku'),
+    ('Masina', 'Masina'),
+    ('Ndjili', 'Ndjili'),
+    ('N’djili', 'N’djili'),
+    ('Limete', 'Limete'),
+    ('Selembao', 'Selembao'),
+    ('Makala', 'Makala'),
+    ('Kasavubu', 'Kasavubu'),
+    ('Bandalungwa', 'Bandalungwa')]
+    commune=models.CharField(max_length=100, choices=COMMUNE_CHOICES,null=True)
+    quartier= models.CharField(max_length=100,null=True)
+    avenue = models.CharField(max_length=100, null=True)
     cnom = models.CharField(max_length=100)
-    langues = models.CharField(max_length=200)
-    specialite = models.CharField(max_length=100)
+    langues = models.JSONField(default=list, blank=True, null=True)
+    SPECIALITE_CHOICES = [
+    ('Médecine générale', 'Médecine générale'),
+    ('Pédiatrie', 'Pédiatrie'),
+    ('Gynécologie-obstétrique', 'Gynécologie-obstétrique'),
+    ('Chirurgie générale', 'Chirurgie générale'),
+    ('Cardiologie', 'Cardiologie'),
+    ('Dermatologie', 'Dermatologie'),
+    ('Neurologie', 'Neurologie'),
+    ('Psychiatrie', 'Psychiatrie'),
+    ('Ophtalmologie', 'Ophtalmologie'),
+    ('ORL (Oto-rhino-laryngologie)', 'ORL (Oto-rhino-laryngologie)'),
+    ('Urologie', 'Urologie'),
+    ('Orthopédie', 'Orthopédie'),
+    ('Gastro-entérologie', 'Gastro-entérologie'),
+    ('Endocrinologie', 'Endocrinologie'),
+    ('Hématologie', 'Hématologie'),
+    ('Néphrologie', 'Néphrologie'),
+    ('Oncologie', 'Oncologie'),
+    ('Rhumatologie', 'Rhumatologie'),
+    ('Médecine interne', 'Médecine interne'),
+    ('Médecine d’urgence', 'Médecine d’urgence'),
+    ('Anesthésie-Réanimation', 'Anesthésie-Réanimation'),
+    ('Radiologie', 'Radiologie'),
+    ('Médecine tropicale', 'Médecine tropicale'),
+    ('Santé publique', 'Santé publique'),
+    ('Médecine du travail', 'Médecine du travail'),
+    ('Médecine légale', 'Médecine légale'),
+    ('Autre', 'Autre'),]
+    specialite = models.CharField(max_length=100, choices=SPECIALITE_CHOICES)
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password)

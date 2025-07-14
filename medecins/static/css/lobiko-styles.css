@@ -1,0 +1,321 @@
+/* Lobiko - Styles CSS Professionnels Réutilisables */
+
+:root {
+    /* Couleurs basées sur le logo Lobiko */
+    --primary-green: #2d8659;
+    --primary-blue: #4a90a4;
+    --secondary-blue: #5ba3b8;
+    --light-gray: #f8f9fa;
+    --medium-gray: #e9ecef;
+    --dark-gray: #495057;
+    --white: #ffffff;
+    --error-red: #dc3545;
+    --success-green: #28a745;
+    --warning-orange: #fd7e14;
+    
+    /* Typographie */
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-size-base: 16px;
+    --font-size-sm: 14px;
+    --font-size-lg: 18px;
+    --font-size-xl: 24px;
+    --font-size-xxl: 32px;
+    
+    /* Espacements */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+    
+    /* Bordures et ombres */
+    --border-radius: 8px;
+    --border-radius-lg: 12px;
+    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --box-shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Reset et base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    color: var(--dark-gray);
+    background: linear-gradient(135deg, var(--light-gray) 0%, var(--medium-gray) 100%);
+    min-height: 100vh;
+}
+
+/* Container principal */
+.lobiko-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+}
+
+/* Carte principale */
+.lobiko-card {
+    background: var(--white);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--box-shadow-lg);
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* En-tête avec logo */
+.lobiko-header {
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-blue) 100%);
+    color: var(--white);
+    padding: var(--spacing-xl);
+    text-align: center;
+    position: relative;
+}
+
+.lobiko-logo {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto var(--spacing-md);
+    background: var(--white);
+    border-radius: 50%;
+    padding: var(--spacing-sm);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.lobiko-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.lobiko-title {
+    font-size: var(--font-size-xxl);
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.lobiko-subtitle {
+    font-size: var(--font-size-lg);
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+/* Corps du formulaire */
+.lobiko-form-body {
+    padding: var(--spacing-xxl);
+}
+
+/* Groupes de champs */
+.lobiko-form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.lobiko-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+    .lobiko-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Labels */
+.lobiko-label {
+    display: block;
+    font-weight: 600;
+    color: var(--dark-gray);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Champs de saisie */
+.lobiko-input,
+.lobiko-select,
+.lobiko-textarea {
+    width: 100%;
+    padding: var(--spacing-md);
+    border: 2px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-base);
+    transition: all 0.3s ease;
+    background: var(--white);
+}
+
+.lobiko-input:focus,
+.lobiko-select:focus,
+.lobiko-textarea:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(74, 144, 164, 0.1);
+    transform: translateY(-1px);
+}
+
+.lobiko-input:hover,
+.lobiko-select:hover,
+.lobiko-textarea:hover {
+    border-color: var(--secondary-blue);
+}
+
+/* Boutons */
+.lobiko-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.lobiko-btn-primary {
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-blue) 100%);
+    color: var(--white);
+    box-shadow: var(--box-shadow);
+}
+
+.lobiko-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(45, 134, 89, 0.3);
+}
+
+.lobiko-btn-primary:active {
+    transform: translateY(0);
+}
+
+.lobiko-btn-full {
+    width: 100%;
+    margin-top: var(--spacing-xl);
+}
+
+/* Messages d'erreur */
+.lobiko-errorlist {
+    list-style: none;
+    margin: var(--spacing-sm) 0 0 0;
+    padding: 0;
+}
+
+.lobiko-errorlist li {
+    color: var(--error-red);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-xs) 0;
+    display: flex;
+    align-items: center;
+}
+
+.lobiko-errorlist li:before {
+    content: "⚠";
+    margin-right: var(--spacing-xs);
+}
+
+/* Messages de succès */
+.lobiko-success {
+    background: var(--success-green);
+    color: var(--white);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+/* Champs avec erreur */
+.lobiko-input.error,
+.lobiko-select.error,
+.lobiko-textarea.error {
+    border-color: var(--error-red);
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+/* Indicateur de champ requis */
+.lobiko-required:after {
+    content: " *";
+    color: var(--error-red);
+}
+
+/* Pied de page */
+.lobiko-footer {
+    background: var(--light-gray);
+    padding: var(--spacing-lg);
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--dark-gray);
+    border-top: 1px solid var(--medium-gray);
+}
+
+/* Animations et transitions */
+.lobiko-fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .lobiko-container {
+        padding: var(--spacing-md);
+    }
+    
+    .lobiko-form-body {
+        padding: var(--spacing-lg);
+    }
+    
+    .lobiko-header {
+        padding: var(--spacing-lg);
+    }
+    
+    .lobiko-title {
+        font-size: var(--font-size-xl);
+    }
+    
+    .lobiko-logo {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* Utilitaires */
+.lobiko-text-center { text-align: center; }
+.lobiko-text-left { text-align: left; }
+.lobiko-text-right { text-align: right; }
+
+.lobiko-mt-sm { margin-top: var(--spacing-sm); }
+.lobiko-mt-md { margin-top: var(--spacing-md); }
+.lobiko-mt-lg { margin-top: var(--spacing-lg); }
+
+.lobiko-mb-sm { margin-bottom: var(--spacing-sm); }
+.lobiko-mb-md { margin-bottom: var(--spacing-md); }
+.lobiko-mb-lg { margin-bottom: var(--spacing-lg); }
+
+.lobiko-hidden { display: none; }
+.lobiko-visible { display: block; }
+
