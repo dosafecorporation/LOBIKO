@@ -6,7 +6,6 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 import requests
-from bot.views import send_reply
 from .forms import MedecinInscriptionForm, MedecinLoginForm, MessageForm
 from lobiko.models import Medecin, Message, SessionDiscussion  # Tu l’as bien précisé : il est dans l'app lobiko
 
