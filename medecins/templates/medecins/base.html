@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Lobiko Health{% endblock %}</title>
+    
+    <!-- CSS externe -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+    
+    <!-- CSS Select2 pour les pages qui en ont besoin -->
+    {% block select2_css %}{% endblock %}
+    
+    <!-- CSS principal -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'js/script.js' %}">
+    <!-- Scripts externes requis -->
+    {% block external_scripts %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}{% endblock %}">
+    <!-- En-tête -->
+    <header class="header {% block header_class %}{% endblock %}">
+        {% block header_content %}
+        <div class="{% block header_container %}logo-container{% endblock %}">
+            <div class="logo {% block logo_class %}{% endblock %}" style="position: relative; width: {% block logo_width %}100px{% endblock %}; height: {% block logo_height %}100px{% endblock %};">
+                <img src="{% static 'images/lobiko.png' %}" alt="Logo Lobiko" width="{% block logo_img_width %}100{% endblock %}" style="position: absolute; top: 0; left: 0;">
+                {% block logo_svg %}
+                <svg width="100" height="100" viewBox="0 0 100 100" style="position: absolute; top: 0; left: 0;" xmlns="http://www.w3.org/2000/svg">
+                    <!-- SVG éléments ici -->
+                </svg>
+                {% endblock %}
+            </div>
+            <div>
+                <h1>{% block site_title %}Lobiko{% endblock %}</h1>
+                <p>{% block site_subtitle %}Plateforme de Santé Professionnelle{% endblock %}</p>
+            </div>
+            {% block header_extra %}{% endblock %}
+        </div>
+        {% endblock %}
+    </header>
+
+    <!-- Navigation latérale (pour dashboard uniquement) -->
+    {% block sidebar %}{% endblock %}
+
+    <!-- Contenu principal -->
+    <main class="{% block main_class %}container{% endblock %}">
+        {% block content %}
+        <!-- Le contenu spécifique de chaque page sera inséré ici -->
+        {% endblock %}
+    </main>
+
+    <!-- Pied de page -->
+    <footer class="footer">
+        <p>&copy; 2024 Lobiko. Tous droits réservés.</p>
+    </footer>
+
+    <!-- Scripts JavaScript -->
+    <script src="{% static 'js/script.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

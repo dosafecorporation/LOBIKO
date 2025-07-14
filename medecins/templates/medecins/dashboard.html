@@ -1,820 +1,309 @@
+{% extends "medecins/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Médecin - Lobiko Health</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        /* Reset et variables CSS */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary-green: #2E8B57;
-            --primary-blue: #4682B4;
-            --accent-teal: #20B2AA;
-            --light-gray: #F8F9FA;
-            --medium-gray: #E9ECEF;
-            --dark-gray: #495057;
-            --white: #FFFFFF;
-            --error-red: #DC3545;
-            --success-green: #28A745;
-            --warning-orange: #FFC107;
-            --gold: #FFD700;
-            --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.1);
-            --shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.15);
-            --border-radius: 8px;
-            --transition: all 0.3s ease;
-            --sidebar-width: 280px;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--light-gray);
-            line-height: 1.6;
-            color: var(--dark-gray);
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-blue) 100%);
-            padding: 1rem 2rem;
-            box-shadow: var(--shadow-medium);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            height: 70px;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 100%;
-        }
-
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo {
-            width: 50px;
-            height: 50px;
-            background: var(--white);
-            border-radius: 50%;
-            padding: 8px;
-            box-shadow: var(--shadow-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .header h1 {
-            color: var(--white);
-            font-size: 1.8rem;
-            font-weight: 300;
-            margin: 0;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            color: var(--white);
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 70px;
-            left: 0;
-            width: var(--sidebar-width);
-            height: calc(100vh - 70px);
-            background: var(--white);
-            box-shadow: var(--shadow-medium);
-            z-index: 999;
-            overflow-y: auto;
-            transition: var(--transition);
-        }
-
-        .sidebar-menu {
-            padding: 2rem 0;
-        }
-
-        .menu-item {
-            display: block;
-            padding: 1rem 2rem;
-            color: var(--dark-gray);
-            text-decoration: none;
-            transition: var(--transition);
-            border-left: 4px solid transparent;
-        }
-
-        .menu-item:hover {
-            background: var(--light-gray);
-            color: var(--primary-blue);
-            border-left-color: var(--primary-blue);
-        }
-
-        .menu-item.active {
-            background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-blue) 100%);
-            color: var(--white);
-            border-left-color: var(--white);
-        }
-
-        .menu-item i {
-            width: 20px;
-            margin-right: 1rem;
-        }
-
-        /* Main content */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            margin-top: 70px;
-            padding: 2rem;
-            min-height: calc(100vh - 70px);
-        }
-
-        /* Dashboard cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-light);
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-medium);
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--primary-blue);
-        }
-
-        .stat-card.green::before { background: var(--success-green); }
-        .stat-card.orange::before { background: var(--warning-orange); }
-        .stat-card.blue::before { background: var(--primary-blue); }
-        .stat-card.gold::before { background: var(--gold); }
-
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: var(--white);
-        }
-
-        .stat-icon.green { background: var(--success-green); }
-        .stat-icon.orange { background: var(--warning-orange); }
-        .stat-icon.blue { background: var(--primary-blue); }
-        .stat-icon.gold { background: var(--gold); }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--dark-gray);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: var(--dark-gray);
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        /* Content sections */
-        .content-section {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            padding: 2rem;
-            box-shadow: var(--shadow-light);
-            margin-bottom: 2rem;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            color: var(--primary-green);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Table styles */
-        .table-container {
-            overflow-x: auto;
-        }
-
-        .custom-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        .custom-table th,
-        .custom-table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--medium-gray);
-        }
-
-        .custom-table th {
-            background: var(--light-gray);
-            font-weight: 600;
-            color: var(--dark-gray);
-        }
-
-        .custom-table tr:hover {
-            background: var(--light-gray);
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: var(--transition);
-            text-decoration: none;
-            display: inline-block;
-            font-size: 0.9rem;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-blue) 100%);
-            color: var(--white);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-light);
-        }
-
-        .btn-outline {
-            border: 2px solid var(--primary-blue);
-            color: var(--primary-blue);
-            background: transparent;
-        }
-
-        .btn-outline:hover {
-            background: var(--primary-blue);
-            color: var(--white);
-        }
-
-        .btn-danger {
-            background: var(--error-red);
-            color: var(--white);
-        }
-
-        /* Status badges */
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .status-pending {
-            background: rgba(255, 193, 7, 0.2);
-            color: #856404;
-        }
-
-        .status-completed {
-            background: rgba(40, 167, 69, 0.2);
-            color: #155724;
-        }
-
-        .status-cancelled {
-            background: rgba(220, 53, 69, 0.2);
-            color: #721c24;
-        }
-
-        /* Star rating */
-        .star-rating {
-            display: flex;
-            gap: 0.2rem;
-            align-items: center;
-        }
-
-        .star {
-            color: var(--gold);
-            font-size: 1.2rem;
-        }
-
-        .star.empty {
-            color: var(--medium-gray);
-        }
-
-        /* Chat interface */
-        .chat-container {
-            height: 400px;
-            border: 1px solid var(--medium-gray);
-            border-radius: var(--border-radius);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chat-header {
-            background: var(--light-gray);
-            padding: 1rem;
-            border-bottom: 1px solid var(--medium-gray);
-            border-radius: var(--border-radius) var(--border-radius) 0 0;
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 1rem;
-            overflow-y: auto;
-        }
-
-        .chat-input {
-            border-top: 1px solid var(--medium-gray);
-            padding: 1rem;
-            display: flex;
-            gap: 1rem;
-        }
-
-        .chat-input input {
-            flex: 1;
-            padding: 0.5rem;
-            border: 1px solid var(--medium-gray);
-            border-radius: var(--border-radius);
-        }
-
-        /* Responsive design */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .header h1 {
-                font-size: 1.4rem;
-            }
-
-            .user-info span {
-                display: none;
-            }
-        }
-
-        /* Mobile menu toggle */
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--white);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        @media (max-width: 768px) {
-            .menu-toggle {
-                display: block;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .content-section {
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        /* Hidden sections */
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <div class="logo-section">
-                <button class="menu-toggle" onclick="toggleSidebar()">
-                    <i class="fas fa-bars"></i>
+
+
+
+{% block title %}Dashboard Médecin - Lobiko Health{% endblock %}
+
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block header_class %}dashboard-header{% endblock %}
+
+{% block header_content %}
+<div class="header-content">
+    <div class="logo-section">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="logo dashboard-logo" style="position: relative; width: 50px; height: 50px;">
+           <img src="{% static 'images/lobiko.png' %}" alt="Logo Lobiko" width="50" style="position: absolute; top: 0; left: 0;">
+       </div>
+        <h1>Lobiko Health</h1>
+    </div>
+    <div class="user-info">
+        <div class="user-avatar">
+            <i class="fas fa-user-md"></i>
+        </div>
+        <span>Dr. {{ medecin.prenom }} {{ medecin.nom }}</span>
+        <a href="{% url 'logout_medecin' %}" class="btn btn-danger">
+            <i class="fas fa-sign-out-alt"></i>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-menu">
+        <a href="#" class="menu-item active" onclick="showSection('dashboard')">
+            <i class="fas fa-chart-dashboard"></i>
+            Dashboard
+        </a>
+        <a href="#" class="menu-item" onclick="showSection('consultations')">
+            <i class="fas fa-stethoscope"></i>
+            Consultations
+        </a>
+        <a href="#" class="menu-item" onclick="showSection('chat')">
+            <i class="fab fa-whatsapp"></i>
+            Chat WhatsApp
+        </a>
+        <a href="#" class="menu-item" onclick="showSection('settings')">
+            <i class="fas fa-cog"></i>
+            Paramètres
+        </a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block main_class %}main-content{% endblock %}
+
+{% block content %}
+<!-- Dashboard Section -->
+<div id="dashboard" class="section active">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-green);">
+        <i class="fas fa-chart-dashboard"></i>
+        Tableau de Bord
+    </h2>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card green">
+            <div class="stat-header">
+                <div class="stat-icon green">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ consultations_mois|default:"0" }}</div>
+            <div class="stat-label">Consultations ce mois</div>
+        </div>
+
+        <div class="stat-card orange">
+            <div class="stat-header">
+                <div class="stat-icon orange">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+            <div class="stat-value">{{ consultations_attente|default:"0" }}</div>
+            <div class="stat-label">En attente</div>
+        </div>
+
+        <div class="stat-card blue">
+            <div class="stat-header">
+                <div class="stat-icon blue">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+            <div class="stat-value">${{ commission_mois|default:"0" }}</div>
+            <div class="stat-label">Commission du mois</div>
+        </div>
+
+        <div class="stat-card gold">
+            <div class="stat-header">
+                <div class="stat-icon gold">
+                    <i class="fas fa-star"></i>
+                </div>
+            </div>
+            <div class="stat-value">
+                <div class="star-rating">
+                    <span>{{ note_moyenne|default:"0.0" }}</span>
+                    <div style="margin-left: 0.5rem;">
+                        {% for i in "12345" %}
+                            <i class="fas fa-star star {% if forloop.counter > note_moyenne|floatformat:0 %}empty{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="stat-label">Note moyenne cumulée</div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="content-section">
+        <h3 class="section-title">
+            <i class="fas fa-activity"></i>
+            Activité Récente
+        </h3>
+        <div class="table-container">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Patient</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th>Note</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions_recentes %}
+                    <tr>
+                        <td>{{ session.patient.prenom }} {{ session.patient.nom }}</td>
+                        <td>{{ session.date_debut|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <span class="status-badge status-{{ session.statut|lower }}">
+                                {{ session.get_statut_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if session.note %}
+                                <div class="star-rating">
+                                    {% for i in "12345" %}
+                                        <i class="fas fa-star star {% if forloop.counter > session.note %}empty{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted">Non évaluée</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="#" class="btn btn-outline">Voir détails</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--dark-gray); opacity: 0.7;">
+                            Aucune consultation récente
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Consultations Section -->
+<div id="consultations" class="section">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-green);">
+        <i class="fas fa-stethoscope"></i>
+        Gestion des Consultations
+    </h2>
+
+    <!-- Filters -->
+    <div class="content-section">
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <button class="btn btn-primary" onclick="filterConsultations('all')">Toutes</button>
+            <button class="btn btn-outline" onclick="filterConsultations('pending')">En attente</button>
+            <button class="btn btn-outline" onclick="filterConsultations('completed')">Terminées</button>
+            <button class="btn btn-outline" onclick="filterConsultations('cancelled')">Annulées</button>
+        </div>
+    </div>
+
+    <!-- Consultations List -->
+    <div class="content-section">
+        <h3 class="section-title">
+            <i class="fas fa-list"></i>
+            Liste des Consultations
+        </h3>
+        <div class="table-container">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Patient</th>
+                        <th>Langue</th>
+                        <th>Date/Heure</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions_en_attente %}
+                    <tr>
+                        <td>{{ session.patient.prenom }} {{ session.patient.nom }} {{ session.patient.postnom }}</td>
+                        <td>{{ session.patient.langue_preferee }}</td>
+                        <td>{{ session.date_debut|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <span class="status-badge status-pending">En attente</span>
+                        </td>
+                        <td>
+                            <a href="{% url 'accepter_session' session.id %}" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Accepter
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--dark-gray); opacity: 0.7;">
+                            Aucune consultation en attente
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Chat Section -->
+<div id="chat" class="section">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-green);">
+        <i class="fab fa-whatsapp"></i>
+        Chat WhatsApp
+    </h2>
+
+    <div class="content-section">
+        <h3 class="section-title">
+            <i class="fas fa-comments"></i>
+            Conversations Actives
+        </h3>
+        <div class="chat-container">
+            <div class="chat-header">
+                <strong>Sélectionnez une conversation</strong>
+            </div>
+            <div class="chat-messages">
+                <p style="text-align: center; color: var(--dark-gray); opacity: 0.7; margin-top: 2rem;">
+                    Intégration WhatsApp à venir...
+                </p>
+            </div>
+            <div class="chat-input">
+                <input type="text" placeholder="Tapez votre message...">
+                <button class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i>
                 </button>
-                <div class="logo" style="position: relative; width: 50px; height: 50px;">
-                   <img src="{% static 'images/lobiko.png' %}" alt="Logo Lobiko" width="50" style="position: absolute; top: 0; left: 0;">
-
-               </div>
-                <h1>Lobiko Health</h1>
-            </div>
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user-md"></i>
-                </div>
-                <span>Dr. {{ medecin.prenom }} {{ medecin.nom }}</span>
-                <a href="{% url 'logout_medecin' %}" class="btn btn-danger">
-                    <i class="fas fa-sign-out-alt"></i>
-                </a>
             </div>
         </div>
-    </header>
+    </div>
+</div>
 
-    <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-menu">
-            <a href="#" class="menu-item active" onclick="showSection('dashboard')">
-                <i class="fas fa-chart-dashboard"></i>
-                Dashboard
-            </a>
-            <a href="#" class="menu-item" onclick="showSection('consultations')">
-                <i class="fas fa-stethoscope"></i>
-                Consultations
-            </a>
-            <a href="#" class="menu-item" onclick="showSection('chat')">
-                <i class="fab fa-whatsapp"></i>
-                Chat WhatsApp
-            </a>
-            <a href="#" class="menu-item" onclick="showSection('settings')">
-                <i class="fas fa-cog"></i>
-                Paramètres
-            </a>
-        </div>
-    </nav>
+<!-- Settings Section -->
+<div id="settings" class="section">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-green);">
+        <i class="fas fa-cog"></i>
+        Paramètres
+    </h2>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Dashboard Section -->
-        <div id="dashboard" class="section active">
-            <h2 style="margin-bottom: 2rem; color: var(--primary-green);">
-                <i class="fas fa-chart-dashboard"></i>
-                Tableau de Bord
-            </h2>
-
-            <!-- Statistics Cards -->
-            <div class="stats-grid">
-                <div class="stat-card green">
-                    <div class="stat-header">
-                        <div class="stat-icon green">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value">{{ consultations_mois|default:"0" }}</div>
-                    <div class="stat-label">Consultations ce mois</div>
+    <div class="content-section">
+        <h3 class="section-title">
+            <i class="fas fa-user"></i>
+            Informations Personnelles
+        </h3>
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div>
+                    <label for="prenom">Prénom</label>
+                    <input type="text" id="prenom" name="prenom" value="{{ medecin.prenom }}" style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--border-radius); margin-top: 0.5rem;">
                 </div>
-
-                <div class="stat-card orange">
-                    <div class="stat-header">
-                        <div class="stat-icon orange">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value">{{ consultations_attente|default:"0" }}</div>
-                    <div class="stat-label">En attente</div>
+                <div>
+                    <label for="nom">Nom</label>
+                    <input type="text" id="nom" name="nom" value="{{ medecin.nom }}" style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--border-radius); margin-top: 0.5rem;">
                 </div>
-
-                <div class="stat-card blue">
-                    <div class="stat-header">
-                        <div class="stat-icon blue">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value">${{ commission_mois|default:"0" }}</div>
-                    <div class="stat-label">Commission du mois</div>
+                <div>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="{{ medecin.email }}" style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--border-radius); margin-top: 0.5rem;">
                 </div>
-
-                <div class="stat-card gold">
-                    <div class="stat-header">
-                        <div class="stat-icon gold">
-                            <i class="fas fa-star"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value">
-                        <div class="star-rating">
-                            <span>{{ note_moyenne|default:"0.0" }}</span>
-                            <div style="margin-left: 0.5rem;">
-                                {% for i in "12345" %}
-                                    <i class="fas fa-star star {% if forloop.counter > note_moyenne|floatformat:0 %}empty{% endif %}"></i>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-label">Note moyenne cumulée</div>
+                <div>
+                    <label for="telephone">Téléphone</label>
+                    <input type="tel" id="telephone" name="telephone" value="{{ medecin.telephone }}" style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--border-radius); margin-top: 0.5rem;">
                 </div>
             </div>
-
-            <!-- Recent Activity -->
-            <div class="content-section">
-                <h3 class="section-title">
-                    <i class="fas fa-activity"></i>
-                    Activité Récente
-                </h3>
-                <div class="table-container">
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Patient</th>
-                                <th>Date</th>
-                                <th>Statut</th>
-                                <th>Note</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for session in sessions_recentes %}
-                            <tr>
-                                <td>{{ session.patient.prenom }} {{ session.patient.nom }}</td>
-                                <td>{{ session.date_debut|date:"d/m/Y H:i" }}</td>
-                                <td>
-                                    <span class="status-badge status-{{ session.statut|lower }}">
-                                        {{ session.get_statut_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if session.note %}
-                                        <div class="star-rating">
-                                            {% for i in "12345" %}
-                                                <i class="fas fa-star star {% if forloop.counter > session.note %}empty{% endif %}"></i>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        <span class="text-muted">Non évaluée</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="#" class="btn btn-outline">Voir détails</a>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" style="text-align: center; color: var(--dark-gray); opacity: 0.7;">
-                                    Aucune consultation récente
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Consultations Section -->
-        <div id="consultations" class="section">
-            <h2 style="margin-bottom: 2rem; color: var(--primary-green);">
-                <i class="fas fa-stethoscope"></i>
-                Gestion des Consultations
-            </h2>
-
-            <!-- Filters -->
-            <div class="content-section">
-                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                    <button class="btn btn-primary" onclick="filterConsultations('all')">Toutes</button>
-                    <button class="btn btn-outline" onclick="filterConsultations('pending')">En attente</button>
-                    <button class="btn btn-outline" onclick="filterConsultations('completed')">Terminées</button>
-                    <button class="btn btn-outline" onclick="filterConsultations('cancelled')">Annulées</button>
-                </div>
-            </div>
-
-            <!-- Consultations List -->
-            <div class="content-section">
-                <h3 class="section-title">
-                    <i class="fas fa-list"></i>
-                    Liste des Consultations
-                </h3>
-                <div class="table-container">
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Patient</th>
-                                <th>Langue</th>
-                                <th>Date/Heure</th>
-                                <th>Statut</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for session in sessions_en_attente %}
-                            <tr>
-                                <td>{{ session.patient.prenom }} {{ session.patient.nom }} {{ session.patient.postnom }}</td>
-                                <td>{{ session.patient.langue_preferee }}</td>
-                                <td>{{ session.date_debut|date:"d/m/Y H:i" }}</td>
-                                <td>
-                                    <span class="status-badge status-pending">En attente</span>
-                                </td>
-                                <td>
-                                    <a href="{% url 'accepter_session' session.id %}" class="btn btn-primary">
-                                        <i class="fas fa-check"></i> Accepter
-                                    </a>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" style="text-align: center; color: var(--dark-gray); opacity: 0.7;">
-                                    Aucune consultation en attente
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Chat Section -->
-        <div id="chat" class="section">
-            <h2 style="margin-bottom: 2rem; color: var(--primary-green);">
-                <i class="fab fa-whatsapp"></i>
-                Chat WhatsApp
-            </h2>
-
-            <div class="content-section">
-                <h3 class="section-title">
-                    <i class="fas fa-comments"></i>
-                    Conversations Actives
-                </h3>
-                <div class="chat-container">
-                    <div class="chat-header">
-                        <strong>Sélectionnez une conversation</strong>
-                    </div>
-                    <div class="chat-messages">
-                        <p style="text-align: center; color: var(--dark-gray); opacity: 0.7; margin-top: 2rem;">
-                            Intégration WhatsApp à venir...
-                        </p>
-                    </div>
-                    <div class="chat-input">
-                        <input type="text" placeholder="Tapez votre message...">
-                        <button class="btn btn-primary">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Settings Section -->
-        <div id="settings" class="section">
-            <h2 style="margin-bottom: 2rem; color: var(--primary-green);">
-                <i class="fas fa-cog"></i>
-                Paramètres
-            </h2>
-
-            <div class="content-section">
-                <h3 class="section-title">
-                    <i class="fas fa-user"></i>
-                    Informations Personnelles
-                </h3>
-                <form method="post">
-                    {% csrf_token %}
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-                        <div>
-                            <label for="prenom">Prénom</label>
-                            <input type="text" id="prenom" name="prenom" value="{{ medecin.prenom }}" style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--border-radius); margin-top: 0.5rem;">
-                        </div>
-                        <div>
-                            <label for="nom">Nom</label>
-                            <input type="text" id="nom" name="nom" value="{{ medecin.nom }}" style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--border-radius); margin-top: 0.5rem;">
-                        </div>
-                        <div>
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" value="{{ medecin.email }}" style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--border-radius); margin-top: 0.5rem;">
-                        </div>
-                        <div>
-                            <label for="telephone">Téléphone</label>
-                            <input type="tel" id="telephone" name="telephone" value="{{ medecin.telephone }}" style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--border-radius); margin-top: 0.5rem;">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="margin-top: 2rem;">
-                        <i class="fas fa-save"></i>
-                        Sauvegarder les modifications
-                    </button>
-                </form>
-            </div>
-        </div>
-    </main>
-
-    <script>
-        // Navigation functions
-        function showSection(sectionId) {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Remove active class from all menu items
-            document.querySelectorAll('.menu-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Show selected section
-            document.getElementById(sectionId).classList.add('active');
-            
-            // Add active class to clicked menu item
-            event.target.classList.add('active');
-        }
-
-        // Mobile sidebar toggle
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('open');
-        }
-
-        // Filter consultations
-        function filterConsultations(filter) {
-            // Update button states
-            document.querySelectorAll('#consultations .btn').forEach(btn => {
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-outline');
-            });
-            event.target.classList.remove('btn-outline');
-            event.target.classList.add('btn-primary');
-            
-            // Filter logic would go here
-            console.log('Filtering consultations by:', filter);
-        }
-
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const menuToggle = document.querySelector('.menu-toggle');
-            
-            if (window.innerWidth <= 768 && 
-                !sidebar.contains(event.target) && 
-                !menuToggle.contains(event.target)) {
-                sidebar.classList.remove('open');
-            }
-        });
-
-        // Update active menu item based on current section
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add smooth scrolling and animations
-            document.querySelectorAll('.stat-card').forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-            });
-        });
-    </script>
-</body>
-</html>
+            <button type="submit" class="btn btn-primary" style="margin-top: 2rem;">
+                <i class="fas fa-save"></i>
+                Sauvegarder les modifications
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
 
