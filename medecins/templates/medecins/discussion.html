@@ -100,7 +100,12 @@
         <div class="input-group">
             {{ form.message }}
             <button type="submit" class="btn btn-primary">Envoyer</button>
-            <button type="submit" name="close_session" class="btn btn-danger">Terminer la session</button>
+        </div>
+    </form>
+    <form method="POST" class="mb-3">
+        {% csrf_token %}
+        <div class="input-group">
+            <button type="submit" name="close_session" class="btn btn-danger">Terminer la discussion</button>
         </div>
     </form>
     {% else %}
