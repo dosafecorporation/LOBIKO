@@ -374,10 +374,33 @@ def recevoir_message_medecin(request):
         if action == 'close_session':
             session.date_fin = now()
             session.save()
-            message_content = "La consultation a été clôturée par le médecin."
-            is_notification = True
+            
+            # Message cordial envoyé au patient
+            patient_message = (
+                "🗓️ Consultation terminée\n\n"
+                f"Dr {medecin.nom} a clôturé la discussion. "
+                "Merci pour votre confiance !\n\n"
+                "Pour une nouvelle consultation, n'hésitez à nous contacter."
+            )
+            
+            # Enregistrement du message dans BDD
+            Message.objects.create(
+                session=session,
+                contenu=patient_message,  # On enregistre le même message que celui envoyé
+                timestamp=now(),
+                emetteur_type='MEDECIN',  # Provenance du médecin
+                emetteur_id=medecin.id
+            )
+            
+            # Envoi au patient
+            send_whatsapp_message(session.patient.telephone, patient_message)
+            
+            return JsonResponse({
+                "status": "session closed",
+                "message": "Session clôturée et patient notifié"
+            })
 
-        # Enregistrement du message en BDD
+        # Enregistrement du message normal en BDD
         message = Message.objects.create(
             session=session,
             contenu=message_content,
@@ -386,9 +409,8 @@ def recevoir_message_medecin(request):
             emetteur_id=medecin.id
         )
 
-        # Envoi au patient seulement si ce n'est pas une notification système
-        if not is_notification:
-            send_whatsapp_message(session.patient.telephone, message_content)
+        # Envoi au patient
+        send_whatsapp_message(session.patient.telephone, message_content)
 
         return JsonResponse({
             "status": "success",
