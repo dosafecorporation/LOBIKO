@@ -94,11 +94,18 @@
                         {% if "Lien pour la consultation vidéo:" in msg.contenu %}
                             <div class="d-flex flex-column">
                                 <span>{{ msg.contenu|linebreaksbr }}</span>
-                                <a href="{{ msg.contenu|slice:'32:' }}" 
-                                   target="_blank" 
-                                   class="btn btn-success mt-2">
-                                    <i class="fas fa-video"></i> Rejoindre l'appel
-                                </a>
+                                <div class="mt-2">
+                                    <a href="{{ jitsi_link }}" 
+                                    target="_blank" 
+                                    class="btn btn-success"
+                                    onclick="event.preventDefault(); window.open(this.href, '_blank');">
+                                        <i class="fas fa-video"></i> Rejoindre l'appel
+                                    </a>
+                                    <small class="text-muted d-block mt-1">
+                                        Si le lien ne s'ouvre pas, copiez-collez ceci dans votre navigateur:<br>
+                                        <span class="jitsi-link">{{ jitsi_link }}</span>
+                                    </small>
+                                </div>
                             </div>
                         {% else %}
                             {{ msg.contenu|linebreaksbr }}
@@ -161,11 +168,12 @@
             if (msg.textContent.includes('Lien pour la consultation vidéo:')) {
                 if (!msg.querySelector('.btn-success')) {
                     const link = msg.textContent.match(/https?:\/\/[^\s]+/)[0];
-                    const btn = document.createElement('a');
-                    btn.href = link;
-                    btn.target = '_blank';
+                    const btn = document.createElement('button');
                     btn.className = 'btn btn-success mt-2';
                     btn.innerHTML = '<i class="fas fa-video"></i> Rejoindre l\'appel';
+                    btn.onclick = function() { 
+                        window.open(link, '_blank'); 
+                    };
                     msg.appendChild(btn);
                 }
             }
