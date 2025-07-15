@@ -305,5 +305,46 @@
         </form>
     </div>
 </div>
+
+<script>
+// Fonction pour recharger les données via AJAX
+function refreshDashboard() {
+    $.ajax({
+        url: window.location.href,  // Recharge la même URL
+        type: 'GET',
+        dataType: 'html',
+        success: function(data) {
+            // Extrait seulement la partie dashboard du HTML reçu
+            const newContent = $(data).find('#dashboard').html();
+            // Met à jour le contenu
+            $('#dashboard').html(newContent);
+        },
+        complete: function() {
+            // Planifie le prochain rafraîchissement dans 3 secondes
+            setTimeout(refreshDashboard, 3000);
+        }
+    });
+}
+
+// Démarrer le rafraîchissement automatique quand la page est prête
+$(document).ready(function() {
+    // Seulement si on est sur la section dashboard
+    if ($('#dashboard').hasClass('active')) {
+        setTimeout(refreshDashboard, 3000);
+    }
+});
+
+// Gérer le changement de section
+function showSection(sectionId) {
+    $('.section').removeClass('active');
+    $('#' + sectionId).addClass('active');
+    
+    // Si on revient sur le dashboard, relancer le rafraîchissement
+    if (sectionId === 'dashboard') {
+        setTimeout(refreshDashboard, 3000);
+    }
+}
+</script>
+
 {% endblock %}
 
