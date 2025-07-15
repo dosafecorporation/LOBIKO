@@ -97,12 +97,12 @@ def handle_patient_registration(from_number, content):
     if state.get('step') == 'awaiting_nom':
         temp_data['nom'] = content
         state.update({'step': 'awaiting_postnom', 'temp_data': temp_data})
-        return "Merci ! Veuillez entrer votre postnom :"
+        return "Merci ! Veuillez entrer votre Postnom :"
     
     elif state.get('step') == 'awaiting_postnom':
         temp_data['postnom'] = content
         state.update({'step': 'awaiting_prenom', 'temp_data': temp_data})
-        return "Merci ! Veuillez entrer votre prénom :"
+        return "Merci ! Veuillez entrer votre Prénom :"
     
     elif state.get('step') == 'awaiting_prenom':
         temp_data['prenom'] = content
@@ -135,13 +135,26 @@ def handle_patient_registration(from_number, content):
         return f"Merci ! Veuillez indiquer votre état civil ({civil_options}) :"
     
     elif state.get('step') == 'awaiting_etat_civil':
-        input_etat_civil = content.strip().lower()
-        selected_etat = next((label for label, _ in Choices.ETAT_CIVIL 
-                            if label.lower() == input_etat_civil), None)
+        # Prend la première lettre en majuscule
+        first_letter = content.upper()[:1] if content else ''
+        
+        # Mappage des premières lettres aux états civils
+        etat_mapping = {
+            'C': 'Célibataire',
+            'M': 'Marié(e)',
+            'D': 'Divorcé(e)',
+            'V': 'Veuf(ve)',
+            'U': 'Union libre'
+        }
+        
+        selected_etat = etat_mapping.get(first_letter)
         
         if not selected_etat:
-            civil_options = ", ".join([label for label, _ in Choices.ETAT_CIVIL])
-            return f"❌ État civil invalide. Choisissez parmi : {civil_options}"
+            civil_options = "\n".join([
+                f"- {label[0]}: {label}" 
+                for label, _ in Choices.ETAT_CIVIL
+            ])
+            return f"❌ État civil invalide. Choisissez par la première lettre :\n{civil_options}"
         
         temp_data['etat_civil'] = selected_etat
         state.update({'step': 'awaiting_commune', 'temp_data': temp_data})
@@ -176,9 +189,19 @@ def handle_patient_registration(from_number, content):
         return f"Merci ! Quelle est votre langue préférée ? ({langue_options})"
     
     elif state.get('step') == 'awaiting_langue':
-        langue = next((code for code, label in Choices.LANGUES if label.lower() == content.lower()), None)
+        # Prend les 2 premières lettres en minuscules
+        lang_code = content.lower()[:2] if content else ''
+        
+        # Cherche la langue correspondante
+        langue = next((code for code, _ in Choices.LANGUES 
+                    if code == lang_code), None)
+        
         if not langue:
-            return f"❌ Langue invalide. Veuillez choisir parmi la liste."
+            langue_options = "\n".join([
+                f"- {code}: {label}" 
+                for code, label in Choices.LANGUES
+            ])
+            return f"❌ Langue invalide. Choisissez par le code (2 lettres) :\n{langue_options}"
         
         temp_data['langue_preferee'] = [langue]
         
@@ -294,7 +317,7 @@ def webhook(request):
                     'last_updated': now()
                 }
                 start_registration_timer(from_number)
-                send_whatsapp_message(from_number, "👋 Bienvenue ! Pour commencer, quel est votre nom ? (Tapez 'stop' pour annuler)")
+                send_whatsapp_message(from_number, "👋 Bienvenue ! Pour commencer, quel est votre Nom ? (Tapez 'stop' pour annuler)")
                 return JsonResponse({"status": "registration started"})
 
             # Gestion des étapes d'inscription
