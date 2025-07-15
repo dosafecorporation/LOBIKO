@@ -99,7 +99,7 @@ def discussion_session(request, session_id):
     if session.medecin and session.medecin != medecin:
         return redirect('dashboard_medecin')
 
-    # Récupération des messages et initialisation du formulaire
+    # Récupération des messages
     messages_list = Message.objects.filter(session=session).order_by('timestamp')
     form = MessageForm(request.POST or None)
 
@@ -109,18 +109,19 @@ def discussion_session(request, session_id):
             session.date_fin = timezone.now()
             session.save()
             
-            # Envoi notification au patient
+            # Envoi notification au bot
             bot_url = request.build_absolute_uri(reverse('bot:recevoir_message_medecin'))
             notification_data = {
                 'medecin_id': medecin_id,
                 'session_id': session_id,
                 'message': "Le médecin a clôturé la consultation.",
-                'is_notification': True
+                'is_notification': True,
+                'action': 'close_session'
             }
             try:
                 requests.post(bot_url, json=notification_data, timeout=5)
             except requests.RequestException:
-                pass  # On continue même si l'envoi échoue
+                pass
             
             django_messages.success(request, "La session a été clôturée.")
             return redirect('dashboard_medecin')
@@ -129,23 +130,14 @@ def discussion_session(request, session_id):
         if form.is_valid():
             message_content = form.cleaned_data['message']
             
-            # Création du message en base de données
-            new_message = Message.objects.create(
-                session=session,
-                contenu=message_content,
-                emetteur_medecin=medecin,
-                emetteur_type='MEDECIN',
-                emetteur_id=medecin.id
-            )
-
-            # Envoi au bot via webhook
+            # Envoi au bot via webhook (sans créer le message en BDD ici)
             bot_url = request.build_absolute_uri(reverse('bot:recevoir_message_medecin'))
             message_data = {
                 'medecin_id': medecin_id,
                 'session_id': session_id,
                 'message': message_content,
-                'message_id': new_message.id,
-                'timestamp': new_message.timestamp.isoformat()
+                'is_notification': False,
+                'action': 'new_message'
             }
 
             try:
@@ -153,20 +145,20 @@ def discussion_session(request, session_id):
                     bot_url,
                     json=message_data,
                     headers={'Content-Type': 'application/json'},
-                    timeout=10  # Timeout de 10 secondes
+                    timeout=10
                 )
                 
-                if response.status_code != 200:
+                if response.status_code == 200:
+                    django_messages.success(request, "Message envoyé avec succès.")
+                else:
                     raise requests.RequestException(f"Code {response.status_code}: {response.text}")
                 
-                django_messages.success(request, "Message envoyé avec succès.")
                 return redirect('discussion_session', session_id=session_id)
 
             except requests.RequestException as e:
-                # On garde le message même si l'envoi échoue
                 django_messages.error(
                     request, 
-                    f"Message enregistré mais erreur lors de l'envoi au patient: {str(e)}"
+                    f"Erreur lors de l'envoi du message: {str(e)}"
                 )
                 return redirect('discussion_session', session_id=session_id)
 

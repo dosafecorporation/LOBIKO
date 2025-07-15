@@ -249,39 +249,47 @@ def recevoir_message_medecin(request):
         data = json.loads(request.body.decode('utf-8'))
         session_id = data.get('session_id')
         medecin_id = data.get('medecin_id')
-        contenu = data.get('message', '').strip()
+        message_content = data.get('message', '').strip()
+        action = data.get('action', 'new_message')
+        is_notification = data.get('is_notification', False)
 
-        if not all([session_id, medecin_id, contenu]):
+        if not all([session_id, medecin_id]):
             return JsonResponse({"status": "missing data"}, status=400)
 
         session = SessionDiscussion.objects.get(id=session_id)
         medecin = Medecin.objects.get(id=medecin_id)
 
+        # Vérification des permissions
         if session.medecin and session.medecin != medecin:
             return JsonResponse({"status": "unauthorized"}, status=403)
 
-        # Si premier message, associer le médecin à la session
-        if not session.medecin:
-            session.medecin = medecin
+        if action == 'close_session':
+            session.date_fin = now()
             session.save()
+            message_content = "La consultation a été clôturée par le médecin."
+            is_notification = True
 
-        # Enregistrer le message
-        Message.objects.create(
+        # Enregistrement du message en BDD
+        message = Message.objects.create(
             session=session,
-            contenu=contenu,
+            contenu=message_content,
             timestamp=now(),
-            emetteur_medecin=medecin,
             emetteur_type='MEDECIN',
             emetteur_id=medecin.id
         )
 
-        # Envoyer au patient
-        send_whatsapp_message(session.patient.telephone, contenu)
+        # Envoi au patient seulement si ce n'est pas une notification système
+        if not is_notification:
+            send_whatsapp_message(session.patient.telephone, message_content)
 
-        return JsonResponse({"status": "success"})
+        return JsonResponse({
+            "status": "success",
+            "message_id": message.id,
+            "timestamp": message.timestamp.isoformat()
+        })
 
     except (SessionDiscussion.DoesNotExist, Medecin.DoesNotExist):
         return JsonResponse({"status": "not found"}, status=404)
     except Exception as e:
-        logger.error(f"Erreur message médecin: {str(e)}")
+        logger.error(f"Erreur traitement message médecin: {str(e)}")
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
