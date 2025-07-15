@@ -177,7 +177,7 @@ def handle_patient_registration(from_number, content):
     elif state.get('step') == 'awaiting_quartier':
         temp_data['quartier'] = content
         state.update({'step': 'awaiting_avenue', 'temp_data': temp_data})
-        return "Merci ! Veuillez indiquer votre avenue/rue (facultatif) :"
+        return "Merci ! Veuillez indiquer votre avenue/rue :"
     
     elif state.get('step') == 'awaiting_avenue':
         temp_data['avenue'] = content if content else None
@@ -279,13 +279,19 @@ def webhook(request):
                     date_fin__isnull=True
                 ).order_by('-date_debut').first()
 
-                if content == 'médecin':
-                    if active_session:
-                        send_whatsapp_message(from_number, "✅ Vous avez déjà une demande en cours. Un médecin va vous répondre.")
+                # Vérifie si on attend une confirmation de consultation
+                if users_state.get(from_number, {}).get('step') == 'awaiting_medecin_confirmation':
+                    if content == 'oui':
+                        if not active_session:
+                            session = create_patient_session(patient)
+                            send_whatsapp_message(from_number, "✅ Votre demande a été enregistrée. Un médecin va vous contacter. Tapez 'stop consultation' pour annuler.")
+                        else:
+                            send_whatsapp_message(from_number, "✅ Votre demande est déjà en cours. Un médecin va vous répondre.")
                     else:
-                        session = create_patient_session(patient)
-                        send_whatsapp_message(from_number, "✅ Votre demande a été enregistrée. Un médecin va vous contacter. Tapez 'stop consultation' pour annuler.")
-                    return JsonResponse({"status": "session handled"})
+                        send_whatsapp_message(from_number, "❌ Demande non confirmée. Tapez 'oui' si vous souhaitez consulter un médecin.")
+                    
+                    users_state.pop(from_number, None)
+                    return JsonResponse({"status": "medecin confirmation handled"})
 
                 if active_session:
                     # Vérifie si le patient veut arrêter la consultation
@@ -305,9 +311,17 @@ def webhook(request):
                     )
                     return JsonResponse({"status": "message saved"})
 
-                # Réponse par défaut pour patient enregistré
-                send_whatsapp_message(from_number, "Tapez 'médecin' pour parler à un professionnel ou 'stop' pour annuler.")
-                return JsonResponse({"status": "default response"})
+                # Salutation et proposition de consultation
+                users_state[from_number] = {
+                    'step': 'awaiting_medecin_confirmation',
+                    'last_updated': now()
+                }
+                send_whatsapp_message(
+                    from_number,
+                    f"👋 Bonjour {patient.prenom} ! Souhaitez-vous consulter un médecin ?\n"
+                    "Répondez par 'oui' pour confirmer ou 'stop' pour annuler."
+                )
+                return JsonResponse({"status": "awaiting consultation confirmation"})
 
             # Processus d'inscription
             if from_number not in users_state:
