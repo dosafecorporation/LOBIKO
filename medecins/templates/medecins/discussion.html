@@ -92,18 +92,30 @@
                         {% else %}alert-warning{% endif %}">
                         
                         {% if "Lien pour la consultation vidéo:" in msg.contenu %}
-                            <div class="d-flex flex-column">
-                                <span>{{ msg.contenu|linebreaksbr }}</span>
-                                <div class="mt-2">
-                                    <button class="btn btn-success open-call-btn" data-msg="{{ msg.contenu|escapejs }}">
-                                        <i class="fas fa-video"></i> Rejoindre l'appel
-                                    </button>
-                                    <small class="text-muted d-block mt-1">
-                                        Si le lien ne s'ouvre pas, copiez-collez ceci dans votre navigateur:<br>
-                                        <span class="jitsi-link text-break">{{ msg.contenu|linebreaksbr }}</span>
-                                    </small>
-                                </div>
-                            </div>
+                            {% with msg.contenu|urlize as contenu_html %}
+                                {% with contenu_html|safe as contenu_safe %}
+                                    {% for word in contenu_safe.split %}
+                                        {% if "https://" in word %}
+                                            {% with word as jitsi_link %}
+                                                <div class="d-flex flex-column">
+                                                    <span>{{ msg.contenu|linebreaksbr }}</span>
+                                                    <div class="mt-2">
+                                                        <a href="{{ jitsi_link|safe }}" 
+                                                        target="_blank" 
+                                                        class="btn btn-success">
+                                                            <i class="fas fa-video"></i> Rejoindre l'appel
+                                                        </a>
+                                                        <small class="text-muted d-block mt-1">
+                                                            Si le lien ne s'ouvre pas, copiez-collez ceci dans votre navigateur:<br>
+                                                            <span class="jitsi-link">{{ jitsi_link }}</span>
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            {% endwith %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endwith %}
+                            {% endwith %}
                         {% else %}
                             {{ msg.contenu|linebreaksbr }}
                         {% endif %}
