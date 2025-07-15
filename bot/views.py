@@ -277,7 +277,6 @@ def webhook(request):
                         session=active_session,
                         contenu=content,
                         timestamp=now(),
-                        emetteur_patient=patient,
                         emetteur_type='PATIENT',
                         emetteur_id=patient.id
                     )
