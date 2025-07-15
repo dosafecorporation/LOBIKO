@@ -3,10 +3,12 @@ import requests
 import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
-from django.utils.timezone import now
+from django.utils.timezone import now, timedelta
 from lobiko.models import Medecin, Message, Patient, SessionDiscussion, Choices
 from django.conf import settings
 from datetime import datetime
+import threading
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +16,11 @@ logger = logging.getLogger(__name__)
 VERIFY_TOKEN = settings.VERIFY_TOKEN
 ACCESS_TOKEN = settings.ACCESS_TOKEN
 PHONE_NUMBER_ID = settings.PHONE_NUMBER_ID
+REGISTRATION_TIMEOUT = 3600  # 1 heure en secondes
 
 # Stockage temporaire des états utilisateurs
 users_state = {}
+registration_timers = {}
 
 def is_valid_date(date_string):
     try:
@@ -49,10 +53,46 @@ def create_patient_session(patient):
     logger.info(f"Nouvelle session créée pour le patient {patient.id}")
     return session
 
+def cancel_registration(phone_number):
+    """Annule l'inscription après le timeout"""
+    if phone_number in users_state:
+        send_whatsapp_message(phone_number, "⏱️ Délai d'inscription dépassé. Veuillez recommencer.")
+        users_state.pop(phone_number, None)
+        registration_timers.pop(phone_number, None)
+
+def start_registration_timer(phone_number):
+    """Démarre un timer pour annuler l'inscription après 1h"""
+    if phone_number in registration_timers:
+        registration_timers[phone_number].cancel()
+    
+    timer = threading.Timer(REGISTRATION_TIMEOUT, cancel_registration, args=[phone_number])
+    timer.start()
+    registration_timers[phone_number] = timer
+
+def handle_stop_command(phone_number):
+    """Gère la commande d'annulation"""
+    if phone_number in users_state:
+        users_state.pop(phone_number, None)
+        if phone_number in registration_timers:
+            registration_timers[phone_number].cancel()
+            registration_timers.pop(phone_number, None)
+        send_whatsapp_message(phone_number, "✅ Opération annulée. Tapez à nouveau pour recommencer.")
+        return True
+    return False
+
 def handle_patient_registration(from_number, content):
     """Gère le processus d'inscription étape par étape"""
+    # Vérifie si l'utilisateur veut annuler
+    if content.lower() in ['stop', 'annuler', 'cancel']:
+        if handle_stop_command(from_number):
+            return None
+    
     state = users_state.get(from_number, {})
     temp_data = state.get('temp_data', {})
+    
+    # Réinitialise le timer à chaque interaction
+    if from_number in users_state:
+        start_registration_timer(from_number)
     
     if state.get('step') == 'awaiting_nom':
         temp_data['nom'] = content
@@ -146,10 +186,16 @@ def handle_patient_registration(from_number, content):
                 langue_preferee=temp_data['langue_preferee'],
             )
             users_state.pop(from_number, None)
-            return f"✅ Inscription réussie, {temp_data['prenom']} ! Tapez 'médecin' pour parler à un professionnel."
+            if from_number in registration_timers:
+                registration_timers[from_number].cancel()
+                registration_timers.pop(from_number, None)
+            return f"✅ Inscription réussie, {temp_data['prenom']} ! Tapez 'médecin' pour parler à un professionnel ou 'stop' pour annuler."
         except Exception as e:
             logger.error(f"Erreur création patient: {str(e)}")
             users_state.pop(from_number, None)
+            if from_number in registration_timers:
+                registration_timers[from_number].cancel()
+                registration_timers.pop(from_number, None)
             return "❌ Erreur lors de l'inscription. Veuillez recommencer."
     
     return None
@@ -175,12 +221,17 @@ def webhook(request):
             message = value.get('messages', [{}])[0]
             
             from_number = message.get('from')
-            content = message.get('text', {}).get('body', '').strip()
+            content = message.get('text', {}).get('body', '').strip().lower()
 
             if not from_number or not content:
                 return JsonResponse({"status": "missing data"})
 
             logger.info(f"Message de {from_number}: {content}")
+
+            # Vérifie si c'est une commande d'annulation
+            if content in ['stop', 'annuler', 'cancel']:
+                handle_stop_command(from_number)
+                return JsonResponse({"status": "operation cancelled"})
 
             # Vérifier si le patient existe
             patient = Patient.objects.filter(telephone=from_number).first()
@@ -192,15 +243,22 @@ def webhook(request):
                     date_fin__isnull=True
                 ).order_by('-date_debut').first()
 
-                if content.lower() == 'médecin':
+                if content == 'médecin':
                     if active_session:
                         send_whatsapp_message(from_number, "✅ Vous avez déjà une demande en cours. Un médecin va vous répondre.")
                     else:
-                        create_patient_session(patient)
-                        send_whatsapp_message(from_number, "✅ Votre demande a été enregistrée. Un médecin va vous contacter.")
+                        session = create_patient_session(patient)
+                        send_whatsapp_message(from_number, "✅ Votre demande a été enregistrée. Un médecin va vous contacter. Tapez 'stop' pour annuler.")
                     return JsonResponse({"status": "session handled"})
 
                 if active_session:
+                    # Vérifie si le patient veut arrêter la consultation
+                    if content in ['stop consultation', 'arrêter consultation']:
+                        active_session.date_fin = now()
+                        active_session.save()
+                        send_whatsapp_message(from_number, "✅ Consultation terminée. Merci !")
+                        return JsonResponse({"status": "session ended"})
+                    
                     # Enregistrer le message
                     Message.objects.create(
                         session=active_session,
@@ -213,7 +271,7 @@ def webhook(request):
                     return JsonResponse({"status": "message saved"})
 
                 # Réponse par défaut pour patient enregistré
-                send_whatsapp_message(from_number, "Tapez 'médecin' pour parler à un professionnel.")
+                send_whatsapp_message(from_number, "Tapez 'médecin' pour parler à un professionnel ou 'stop' pour annuler.")
                 return JsonResponse({"status": "default response"})
 
             # Processus d'inscription
@@ -223,7 +281,8 @@ def webhook(request):
                     'temp_data': {},
                     'last_updated': now()
                 }
-                send_whatsapp_message(from_number, "👋 Bienvenue ! Pour commencer, quel est votre nom ?")
+                start_registration_timer(from_number)
+                send_whatsapp_message(from_number, "👋 Bienvenue ! Pour commencer, quel est votre nom ? (Tapez 'stop' pour annuler)")
                 return JsonResponse({"status": "registration started"})
 
             # Gestion des étapes d'inscription
