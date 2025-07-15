@@ -266,7 +266,7 @@ def webhook(request):
 
                 if active_session:
                     # Vérifie si le patient veut arrêter la consultation
-                    if content in ['stop', 'arrêter']:
+                    if content in ['stop consultation', 'arrêter consultation']:
                         active_session.date_fin = now()
                         active_session.save()
                         send_whatsapp_message(from_number, "✅ Consultation terminée. Merci !")
