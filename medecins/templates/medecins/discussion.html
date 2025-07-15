@@ -95,14 +95,12 @@
                             <div class="d-flex flex-column">
                                 <span>{{ msg.contenu|linebreaksbr }}</span>
                                 <div class="mt-2">
-                                    <a href="{{ jitsi_link }}" 
-                                    target="_blank" 
-                                    class="btn btn-success">
-                                    <i class="fas fa-video"></i> Rejoindre l'appel
-                                    </a>
+                                    <button class="btn btn-success open-call-btn" data-msg="{{ msg.contenu|escapejs }}">
+                                        <i class="fas fa-video"></i> Rejoindre l'appel
+                                    </button>
                                     <small class="text-muted d-block mt-1">
                                         Si le lien ne s'ouvre pas, copiez-collez ceci dans votre navigateur:<br>
-                                        <span class="jitsi-link">{{ jitsi_link }}</span>
+                                        <span class="jitsi-link text-break">{{ msg.contenu|linebreaksbr }}</span>
                                     </small>
                                 </div>
                             </div>
@@ -160,24 +158,18 @@
     // Focus sur le champ de message
     document.querySelector('textarea').focus();
     
-    // Détection des nouveaux messages avec liens Jitsi
-    function checkForJitsiLinks() {
-        const jitsiMessages = document.querySelectorAll('.alert-primary');
-        jitsiMessages.forEach(msg => {
-            if (msg.textContent.includes('Lien pour la consultation vidéo:')) {
-                if (!msg.querySelector('.btn-success')) {
-                    const link = msg.textContent.match(/https?:\/\/[^\s]+/)[0];
-                    const btn = document.createElement('button');
-                    btn.className = 'btn btn-success mt-2';
-                    btn.innerHTML = '<i class="fas fa-video"></i> Rejoindre l\'appel';
-                    btn.onclick = function() { 
-                        window.open(link, '_blank'); 
-                    };
-                    msg.appendChild(btn);
-                }
+    document.querySelectorAll('.open-call-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const contenu = btn.dataset.msg;
+            const urlMatch = contenu.match(/https?:\/\/[^\s<]+/);
+            if (urlMatch) {
+                const url = urlMatch[0];
+                window.open(url, '_blank');
+            } else {
+                alert("Lien Jitsi introuvable.");
             }
         });
-    }
+    });
     
     // Vérifier périodiquement les nouveaux messages
     setInterval(checkForJitsiLinks, 1000);
