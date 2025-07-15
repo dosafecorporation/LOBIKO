@@ -135,16 +135,29 @@ def handle_patient_registration(from_number, content):
         return f"Merci ! Veuillez indiquer votre état civil ({civil_options}) :"
     
     elif state.get('step') == 'awaiting_etat_civil':
-        temp_data['etat_civil'] = content
+        input_etat_civil = content.strip().lower()
+        selected_etat = next((label for label, _ in Choices.ETAT_CIVIL 
+                            if label.lower() == input_etat_civil), None)
+        
+        if not selected_etat:
+            civil_options = ", ".join([label for label, _ in Choices.ETAT_CIVIL])
+            return f"❌ État civil invalide. Choisissez parmi : {civil_options}"
+        
+        temp_data['etat_civil'] = selected_etat
         state.update({'step': 'awaiting_commune', 'temp_data': temp_data})
         commune_options = "\n".join([f"- {label}" for label, _ in Choices.COMMUNE])
         return f"Merci ! Dans quelle commune habitez-vous ?\n{commune_options}"
     
     elif state.get('step') == 'awaiting_commune':
-        if content not in [label for label, _ in Choices.COMMUNE]:
-            return "❌ Commune invalide. Veuillez choisir parmi la liste."
+        input_commune = content.strip().lower()
+        selected_commune = next((label for label, _ in Choices.COMMUNE 
+                               if label.lower() == input_commune), None)
         
-        temp_data['commune'] = content
+        if not selected_commune:
+            commune_options = "\n".join([f"- {label}" for label, _ in Choices.COMMUNE])
+            return f"❌ Commune invalide. Veuillez choisir parmi :\n{commune_options}"
+        
+        temp_data['commune'] = selected_commune
         state.update({'step': 'awaiting_quartier', 'temp_data': temp_data})
         return "Merci ! Veuillez indiquer votre quartier :"
     
