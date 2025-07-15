@@ -261,12 +261,12 @@ def webhook(request):
                         send_whatsapp_message(from_number, "✅ Vous avez déjà une demande en cours. Un médecin va vous répondre.")
                     else:
                         session = create_patient_session(patient)
-                        send_whatsapp_message(from_number, "✅ Votre demande a été enregistrée. Un médecin va vous contacter. Tapez 'stop' pour annuler.")
+                        send_whatsapp_message(from_number, "✅ Votre demande a été enregistrée. Un médecin va vous contacter. Tapez 'stop consultation' pour annuler.")
                     return JsonResponse({"status": "session handled"})
 
                 if active_session:
                     # Vérifie si le patient veut arrêter la consultation
-                    if content in ['stop consultation', 'arrêter consultation']:
+                    if content in ['stop', 'arrêter']:
                         active_session.date_fin = now()
                         active_session.save()
                         send_whatsapp_message(from_number, "✅ Consultation terminée. Merci !")

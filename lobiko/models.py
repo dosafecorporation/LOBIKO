@@ -35,9 +35,9 @@ class Choices:
     ]
     ETAT_CIVIL = [
         ('Célibataire', 'Célibataire'),
-        ('Marié(e)', 'Marié(e)'),
-        ('Divorcé(e)', 'Divorcé(e)'),
-        ('Veuf(ve)', 'Veuf(ve)'),
+        ('Marié', 'Marié'),
+        ('Divorcé', 'Divorcé'),
+        ('Veuf', 'Veuf'),
         ('Union libre', 'Union libre')
     ]
     SPECIALITE = [
