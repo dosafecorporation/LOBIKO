@@ -225,7 +225,7 @@ def handle_patient_registration(from_number, content):
             if from_number in registration_timers:
                 registration_timers[from_number].cancel()
                 registration_timers.pop(from_number, None)
-            return f"✅ Inscription réussie, {temp_data['prenom']} ! Tapez 'médecin' pour parler à un professionnel ou 'stop' pour annuler."
+            return f"✅ Inscription réussie, {temp_data['prenom']} ! Merci d'avoir choisi Lobiko Health, vous pouvez nous envoyer un message si vous désirez consulter un médecin"
         except Exception as e:
             logger.error(f"Erreur création patient: {str(e)}")
             users_state.pop(from_number, None)
