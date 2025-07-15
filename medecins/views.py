@@ -1,3 +1,4 @@
+from asyncio.log import logger
 from django.utils import timezone
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
@@ -8,7 +9,9 @@ from django.views.decorators.csrf import csrf_exempt
 import requests
 from django.contrib import messages as django_messages
 from .forms import MedecinInscriptionForm, MedecinLoginForm, MessageForm
-from lobiko.models import Medecin, Message, SessionDiscussion  # Tu l’as bien précisé : il est dans l'app lobiko
+from lobiko.models import Medecin, Message, SessionDiscussion
+import secrets
+from urllib.parse import quote
 
 def inscription_medecin(request):
     if request.method == "POST":
@@ -168,3 +171,63 @@ def discussion_session(request, session_id):
         'messages': messages_list,
         'form': form,
     })
+
+def generate_jitsi_link(session, medecin):
+    """Génère un lien Jitsi pour une session"""
+    room_name = f"consult-{medecin.id}-{session.patient.id}-{secrets.token_hex(4)}"
+    base_url = "https://meet.jit.si/"
+    url = base_url + quote(room_name)
+    url += f"#user.displayName=Dr.{quote(medecin.nom)}"
+    return url
+
+@require_POST
+def initier_appel_jitsi(request, session_id):
+    medecin_id = request.session.get('medecin_id')
+    if not medecin_id:
+        return redirect('login_medecin')
+
+    medecin = get_object_or_404(Medecin, id=medecin_id)
+    session = get_object_or_404(SessionDiscussion, id=session_id)
+
+    # Vérification des permissions
+    if session.medecin != medecin:
+        return redirect('dashboard_medecin')
+
+    # Génération du lien Jitsi
+    jitsi_link = generate_jitsi_link(session, medecin)
+    message_content = f"🔊 Lien pour la consultation vidéo: {jitsi_link}"
+
+    # Préparation des données pour le bot
+    bot_url = request.build_absolute_uri(reverse('bot:recevoir_message_medecin'))
+    message_data = {
+        'medecin_id': medecin_id,
+        'session_id': session_id,
+        'message': message_content,
+        'is_notification': False,
+        'action': 'new_message'
+    }
+
+    try:
+        # Envoi au bot qui va gérer l'enregistrement et l'envoi WhatsApp
+        response = requests.post(
+            bot_url,
+            json=message_data,
+            headers={'Content-Type': 'application/json'},
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            django_messages.success(request, "Lien d'appel envoyé avec succès!")
+        else:
+            # Si le bot répond avec une erreur, on la transmet
+            error_data = response.json()
+            raise requests.RequestException(error_data.get('message', 'Erreur inconnue'))
+
+    except requests.RequestException as e:
+        django_messages.error(
+            request, 
+            f"Erreur lors de l'envoi du lien d'appel: {str(e)}"
+        )
+        logger.error(f"Erreur appel Jitsi - session {session_id}: {str(e)}")
+
+    return redirect('discussion_session', session_id=session_id)

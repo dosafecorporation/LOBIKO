@@ -305,15 +305,5 @@
         </form>
     </div>
 </div>
-
-<script>
-    setInterval(function() {
-        $.get(window.location.href, function(data) {
-            var newContent = $(data).find('#dashboard').html();
-            $('#dashboard').html(newContent);
-        });
-    }, 3000);
-</script>
-
 {% endblock %}
 
