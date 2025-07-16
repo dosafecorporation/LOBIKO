@@ -21,17 +21,8 @@
             gap: 10px;
             margin-bottom: 15px;
         }
-        .jitsi-link {
-            word-break: break-all;
-            background-color: #f8f9fa;
-            padding: 8px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-top: 5px;
-        }
-        .copy-btn {
-            cursor: pointer;
-            color: #0d6efd;
+        .jitsi-btn {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -103,19 +94,10 @@
                         {% if "Lien pour la consultation vidéo:" in msg.contenu %}
                             <div>
                                 <p>{{ msg.contenu|linebreaksbr }}</p>
-                                <div class="mt-2">
-                                    <strong>Copiez-collez ce lien dans votre navigateur :</strong>
-                                    <div class="d-flex align-items-center mt-1">
-                                        {% with jitsi_link=msg.contenu|slice:"34:" %}
-                                        <span class="jitsi-link" id="jitsi-link-{{ forloop.counter }}">
-                                            {{ jitsi_link }}
-                                        </span>
-                                        <span class="copy-btn ms-2" onclick="copyToClipboard('jitsi-link-{{ forloop.counter }}')">
-                                            <i class="far fa-copy"></i> Copier
-                                        </span>
-                                        {% endwith %}
-                                    </div>
-                                </div>
+                                <button onclick="joinJitsiCall('{{ msg.contenu|slice:"34:" }}')" 
+                                        class="btn btn-success jitsi-btn">
+                                    <i class="fas fa-video"></i> Rejoindre l'appel vidéo
+                                </button>
                             </div>
                         {% else %}
                             {{ msg.contenu|linebreaksbr }}
@@ -173,24 +155,19 @@
         document.querySelector('textarea').focus();
     }
 
-    // Fonction pour copier le lien
-    function copyToClipboard(elementId) {
-        const element = document.getElementById(elementId);
-        const textToCopy = element.textContent;
+    // Fonction pour rejoindre l'appel Jitsi
+    function joinJitsiCall(linkPath) {
+        const fullLink = 'https://' + linkPath;
+        const newWindow = window.open(fullLink, '_blank');
         
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            // Feedback visuel
-            const copyBtn = element.nextElementSibling;
-            const originalHtml = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copié!';
-            
-            setTimeout(() => {
-                copyBtn.innerHTML = originalHtml;
-            }, 2000);
-        }).catch(err => {
-            console.error('Erreur lors de la copie: ', err);
-            alert("Erreur lors de la copie du lien");
-        });
+        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+            // Si la fenêtre a été bloquée
+            alert("L'ouverture de la fenêtre a été bloquée. Veuillez autoriser les popups pour ce site.");
+            // Option alternative: redirection dans le même onglet
+            if (confirm("Voulez-vous être redirigé vers l'appel dans cet onglet ?")) {
+                window.location.href = fullLink;
+            }
+        }
     }
 </script>
 </body>
