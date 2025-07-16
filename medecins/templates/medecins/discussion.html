@@ -106,12 +106,14 @@
                                 <div class="mt-2">
                                     <strong>Copiez-collez ce lien dans votre navigateur :</strong>
                                     <div class="d-flex align-items-center mt-1">
+                                        {% with jitsi_link=msg.contenu|slice:"34:" %}
                                         <span class="jitsi-link" id="jitsi-link-{{ forloop.counter }}">
-                                            {{ msg.contenu|slice:"32:" }}
+                                            https://{{ jitsi_link }}
                                         </span>
                                         <span class="copy-btn ms-2" onclick="copyToClipboard('jitsi-link-{{ forloop.counter }}')">
                                             <i class="far fa-copy"></i> Copier
                                         </span>
+                                        {% endwith %}
                                     </div>
                                 </div>
                             </div>
