@@ -157,8 +157,7 @@
 
     // Fonction pour rejoindre l'appel Jitsi
     function joinJitsiCall(linkPath) {
-        const fullLink = 'https://' + linkPath;
-        const newWindow = window.open(fullLink, '_blank');
+        const newWindow = window.open(linkPath, '_blank');
         
         if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
             // Si la fenêtre a été bloquée
