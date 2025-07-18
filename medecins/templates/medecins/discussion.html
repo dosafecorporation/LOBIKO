@@ -118,9 +118,15 @@
                                         <a href="{{ msg.file_url }}" target="_blank" class="btn btn-sm btn-outline-dark">
                                             <i class="fas fa-expand"></i> Agrandir
                                         </a>
-                                        <a href="{{ msg.file_url }}" download class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-download"></i> Télécharger
-                                        </a>
+                                        <div class="media-actions">
+                                            <!-- Bouton de téléchargement amélioré -->
+                                            <a href="{{ msg.file_url }}" download="{{ msg.file_name }}" 
+                                            class="btn btn-sm btn-outline-primary" 
+                                            target="_blank" 
+                                            onclick="event.stopPropagation(); forceDownload(this);">
+                                                <i class="fas fa-download"></i> Télécharger
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             {% elif msg.media_type == 'audio' %}
