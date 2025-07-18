@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'lobiko',
     'bot',
     'medecins',
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -150,3 +151,17 @@ load_dotenv()
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
+
+AWS_S3_MEDIA_FOLDER = 'whatsapp-media/'
+
+# Configuration Amazon S3
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = 'eu-west-3'  # Région S3
+AWS_S3_CUSTOM_DOMAIN = f'{os.getenv("AWS_STORAGE_BUCKET_NAME")}.s3.amazonaws.com'  # URL de téléchargement
+AWS_DEFAULT_ACL = 'public-read'  # Permissions par défaut (si fichiers publics)
+AWS_QUERYSTRING_AUTH = False  # Désactive les URL signées (optionnel)
+
+# Stockage des médias
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'

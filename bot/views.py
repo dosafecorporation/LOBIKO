@@ -1,14 +1,20 @@
 import json
+import mimetypes
+import uuid
 import requests
 import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.utils.timezone import now, timedelta
-from lobiko.models import Medecin, Message, Patient, SessionDiscussion, Choices
+from lobiko.models import Medecin, MediaMessage, Message, Patient, SessionDiscussion, Choices
 from django.conf import settings
 from datetime import datetime
 import threading
 import time
+import boto3
+from botocore.exceptions import ClientError
+from django.core.files.base import ContentFile
+from lobikohealth.settings import AWS_S3_MEDIA_FOLDER
 
 logger = logging.getLogger(__name__)
 
@@ -259,6 +265,49 @@ def webhook(request):
             from_number = message.get('from')
             content = message.get('text', {}).get('body', '').strip().lower()
 
+            # Gestion des médias
+            if 'image' in message:
+                media_response = handle_media_message(from_number, {
+                    'type': 'image',
+                    'id': message['image']['id'],
+                    'mime_type': message['image']['mime_type'],
+                    'caption': message['image'].get('caption', '')
+                })
+                if media_response:
+                    send_whatsapp_message(from_number, media_response)
+                return JsonResponse({"status": "media received"})
+                
+            elif 'audio' in message:
+                media_response = handle_media_message(from_number, {
+                    'type': 'audio',
+                    'id': message['audio']['id'],
+                    'mime_type': message['audio']['mime_type']
+                })
+                if media_response:
+                    send_whatsapp_message(from_number, media_response)
+                return JsonResponse({"status": "media received"})
+                
+            elif 'video' in message:
+                media_response = handle_media_message(from_number, {
+                    'type': 'video',
+                    'id': message['video']['id'],
+                    'mime_type': message['video']['mime_type']
+                })
+                if media_response:
+                    send_whatsapp_message(from_number, media_response)
+                return JsonResponse({"status": "media received"})
+                
+            elif 'document' in message:
+                media_response = handle_media_message(from_number, {
+                    'type': 'document',
+                    'id': message['document']['id'],
+                    'mime_type': message['document']['mime_type'],
+                    'filename': message['document']['filename']
+                })
+                if media_response:
+                    send_whatsapp_message(from_number, media_response)
+                return JsonResponse({"status": "media received"})
+
             if not from_number or not content:
                 return JsonResponse({"status": "missing data"})
 
@@ -423,3 +472,94 @@ def recevoir_message_medecin(request):
     except Exception as e:
         logger.error(f"Erreur traitement message médecin: {str(e)}")
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    
+def upload_to_s3(file_data, file_name, mime_type):
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_S3_REGION_NAME
+    )
+    
+    unique_name = f"{uuid.uuid4()}-{file_name}"
+    s3_key = f"{AWS_S3_MEDIA_FOLDER}{unique_name}"
+    
+    try:
+        s3.upload_fileobj(
+            ContentFile(file_data),
+            settings.AWS_STORAGE_BUCKET_NAME,
+            s3_key,
+            ExtraArgs={
+                'ContentType': mime_type,
+                'ACL': 'public-read' if settings.AWS_DEFAULT_ACL == 'public-read' else 'private'
+            }
+        )
+        return f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_key}"
+    except ClientError as e:
+        logger.error(f"Erreur upload S3: {str(e)}")
+        return None
+
+def handle_media_message(from_number, media_data):
+    """Gère les messages média (image, audio, document, etc.)"""
+    patient = Patient.objects.filter(telephone=from_number).first()
+    if not patient:
+        return None
+    
+    # Vérifier la session active
+    active_session = SessionDiscussion.objects.filter(
+        patient=patient, 
+        date_fin__isnull=True
+    ).order_by('-date_debut').first()
+    
+    if not active_session:
+        return "❌ Aucune session active. Commencez par demander une consultation."
+    
+    try:
+        media_type = media_data.get('type')
+        media_id = media_data.get('id')
+        
+        # Récupérer le média depuis l'API WhatsApp
+        url = f"https://graph.facebook.com/v18.0/{media_id}"
+        headers = {"Authorization": f"Bearer {settings.ACCESS_TOKEN}"}
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        media_content = requests.get(response.json().get('url'), headers=headers)
+        media_content.raise_for_status()
+        
+        # Upload vers S3
+        file_name = media_data.get('filename', f"file-{uuid.uuid4()}")
+        mime_type = media_data.get('mime_type', mimetypes.guess_type(file_name)[0] or 'application/octet-stream')
+        
+        file_url = upload_to_s3(
+            media_content.content,
+            file_name,
+            mime_type
+        )
+        
+        if not file_url:
+            return "❌ Erreur lors du traitement de votre fichier."
+        
+        # Enregistrement en base de données
+        MediaMessage.objects.create(
+            session=active_session,
+            media_type=media_type,
+            file_url=file_url,
+            file_name=file_name,
+            mime_type=mime_type,
+            emetteur_type='PATIENT',
+            emetteur_id=patient.id
+        )
+        
+        # Message de confirmation
+        media_types_fr = {
+            'image': 'image',
+            'audio': 'audio',
+            'video': 'vidéo',
+            'document': 'document'
+        }
+        return f"✅ Votre {media_types_fr.get(media_type, 'fichier')} a bien été reçu et sera transmis au médecin."
+    
+    except Exception as e:
+        logger.error(f"Erreur traitement média: {str(e)}")
+        return "❌ Une erreur est survenue lors du traitement de votre fichier."

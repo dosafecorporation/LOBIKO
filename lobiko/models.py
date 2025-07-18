@@ -265,3 +265,28 @@ class Message(models.Model):
         ordering = ['timestamp']
         verbose_name = "Message"
         verbose_name_plural = "Messages"
+
+class MediaMessage(models.Model):
+    MEDIA_TYPES = [
+        ('image', 'Image'),
+        ('audio', 'Audio'),
+        ('video', 'Video'),
+        ('document', 'Document'),
+        ('other', 'Autre'),
+    ]
+    
+    session = models.ForeignKey(SessionDiscussion, on_delete=models.CASCADE, related_name='media_files')
+    media_type = models.CharField(max_length=10, choices=MEDIA_TYPES)
+    file_url = models.URLField(max_length=500)
+    file_name = models.CharField(max_length=255)
+    mime_type = models.CharField(max_length=100)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    emetteur_type = models.CharField(max_length=10, choices=Message.EMETTEUR_TYPE_CHOICES)
+    emetteur_id = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.get_media_type_display()} - {self.file_name}"
+
+    class Meta:
+        verbose_name = "Fichier média"
+        verbose_name_plural = "Fichiers médias"
