@@ -241,7 +241,7 @@ def initier_appel_jitsi(request, session_id):
 
     return redirect('discussion_session', session_id=session_id)
 
-def proxy_download(request, media_id):
+def proxy_download(request, session_id, media_id):
     media = get_object_or_404(MediaMessage, id=media_id)
     
     medecin_id = request.session.get('medecin_id')

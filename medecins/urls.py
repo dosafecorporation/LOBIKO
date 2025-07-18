@@ -9,5 +9,5 @@ urlpatterns = [
     path('session/<int:session_id>/accepter/', views.accepter_session, name='accepter_session'),
     path('discussion/<int:session_id>/', views.discussion_session, name='discussion_session'),
     path('appel/<int:session_id>/', views.initier_appel_jitsi, name='initier_appel_jitsi'),
-    path('media/download/<int:media_id>/', views.proxy_download, name='proxy_download'),
+    path('media/download/<int:session_id>/<int:media_id>/', views.proxy_download, name='proxy_download'),
 ]

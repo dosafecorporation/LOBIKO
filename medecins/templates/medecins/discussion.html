@@ -118,7 +118,7 @@
                                         <a href="{{ msg.file_url }}" target="_blank" class="btn btn-sm btn-outline-dark">
                                             <i class="fas fa-expand"></i> Agrandir
                                         </a>
-                                        <a href="{% url 'proxy_download' msg.id %}" class="btn btn-sm btn-outline-primary">
+                                        <a href="{% url 'proxy_download' session.id msg.id %}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-download"></i> Télécharger
                                         </a>
                                     </div>
