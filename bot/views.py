@@ -267,45 +267,37 @@ def webhook(request):
 
             # Gestion des médias
             if 'image' in message:
-                media_response = handle_media_message(from_number, {
+                handle_media_message(from_number, {
                     'type': 'image',
                     'id': message['image']['id'],
                     'mime_type': message['image']['mime_type'],
                     'caption': message['image'].get('caption', '')
                 })
-                if media_response:
-                    send_whatsapp_message(from_number, media_response)
                 return JsonResponse({"status": "media received"})
                 
             elif 'audio' in message:
-                media_response = handle_media_message(from_number, {
+                handle_media_message(from_number, {
                     'type': 'audio',
                     'id': message['audio']['id'],
                     'mime_type': message['audio']['mime_type']
                 })
-                if media_response:
-                    send_whatsapp_message(from_number, media_response)
                 return JsonResponse({"status": "media received"})
                 
             elif 'video' in message:
-                media_response = handle_media_message(from_number, {
+                handle_media_message(from_number, {
                     'type': 'video',
                     'id': message['video']['id'],
                     'mime_type': message['video']['mime_type']
                 })
-                if media_response:
-                    send_whatsapp_message(from_number, media_response)
                 return JsonResponse({"status": "media received"})
                 
             elif 'document' in message:
-                media_response = handle_media_message(from_number, {
+                handle_media_message(from_number, {
                     'type': 'document',
                     'id': message['document']['id'],
                     'mime_type': message['document']['mime_type'],
                     'filename': message['document']['filename']
                 })
-                if media_response:
-                    send_whatsapp_message(from_number, media_response)
                 return JsonResponse({"status": "media received"})
 
             if not from_number or not content:
@@ -551,8 +543,12 @@ def handle_media_message(from_number, media_data):
             emetteur_id=patient.id
         )
         
-        return True
+        logger.info(f"Média {media_type} enregistré pour le patient {patient.id}, session {active_session.id}")
+        return None
     
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Erreur API WhatsApp: {str(e)}")
     except Exception as e:
         logger.error(f"Erreur traitement média: {str(e)}")
-        return "❌ Une erreur est survenue lors du traitement de votre fichier."
+    
+    return None
