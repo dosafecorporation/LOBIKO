@@ -380,7 +380,7 @@ def webhook(request):
                     'last_updated': now()
                 }
                 start_registration_timer(from_number)
-                send_whatsapp_message(from_number, "👋 Bienvenue ! Pour commencer, quel est votre Nom ? (Tapez 'stop' pour annuler)")
+                send_whatsapp_message(from_number, "👋 Bonjour ! Pour nous permettre de mieux vous prendre en charge, veuillez répondre à ces quelques questions. Pour commencer, quel est votre Nom ? (Tapez 'stop' pour annuler)")
                 return JsonResponse({"status": "registration started"})
 
             # Gestion des étapes d'inscription
@@ -512,7 +512,7 @@ def handle_media_message(from_number, media_data):
     ).order_by('-date_debut').first()
     
     if not active_session:
-        return "❌ Aucune session active. Commencez par demander une consultation."
+        return "❌ Commencez par demander une consultation avant de pouvoir envoyer des média à un médeci. Merci !."
     
     try:
         media_type = media_data.get('type')
@@ -551,14 +551,7 @@ def handle_media_message(from_number, media_data):
             emetteur_id=patient.id
         )
         
-        # Message de confirmation
-        media_types_fr = {
-            'image': 'image',
-            'audio': 'audio',
-            'video': 'vidéo',
-            'document': 'document'
-        }
-        return f"✅ Votre {media_types_fr.get(media_type, 'fichier')} a bien été reçu et sera transmis au médecin."
+        return True
     
     except Exception as e:
         logger.error(f"Erreur traitement média: {str(e)}")
