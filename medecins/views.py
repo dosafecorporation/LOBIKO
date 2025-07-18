@@ -1,7 +1,7 @@
 from asyncio.log import logger
 from itertools import chain
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.urls import reverse
@@ -240,3 +240,29 @@ def initier_appel_jitsi(request, session_id):
         logger.error(f"Erreur appel Jitsi - session {session_id}: {str(e)}")
 
     return redirect('discussion_session', session_id=session_id)
+
+def proxy_download(request, media_id):
+    media = get_object_or_404(MediaMessage, id=media_id)
+    
+    medecin_id = request.session.get('medecin_id')
+    if not medecin_id:
+        return redirect('login_medecin')
+
+    medecin = get_object_or_404(Medecin, id=medecin_id)
+    session = get_object_or_404(SessionDiscussion, id=session_id)
+
+    # Vérification des permissions
+    if session.medecin != medecin:
+        return redirect('dashboard_medecin')
+    
+    response = requests.get(media.file_url, stream=True)
+    response.raise_for_status()
+    
+    file_response = FileResponse(
+        response.raw,
+        content_type=response.headers['Content-Type'],
+        as_attachment=True,
+        filename=media.file_name
+    )
+    
+    return file_response

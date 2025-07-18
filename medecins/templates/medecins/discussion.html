@@ -40,26 +40,6 @@
             justify-content: center;
             gap: 8px;
         }
-        .media-actions {
-            margin-top: 10px;
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-        }
-
-        .btn-download {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 5px 10px;
-            border-radius: 4px;
-            color: #0d6efd;
-            text-decoration: none;
-            font-size: 0.875rem;
-        }
-
-        .btn-download:hover {
-            background-color: #e9ecef;
-        }
     </style>
 </head>
 <body>
@@ -138,15 +118,9 @@
                                         <a href="{{ msg.file_url }}" target="_blank" class="btn btn-sm btn-outline-dark">
                                             <i class="fas fa-expand"></i> Agrandir
                                         </a>
-                                        <div class="media-actions">
-                                            <!-- Bouton de téléchargement amélioré -->
-                                            <a href="{{ msg.file_url }}" download="{{ msg.file_name }}" 
-                                            class="btn btn-sm btn-outline-primary" 
-                                            target="_blank" 
-                                            onclick="event.stopPropagation(); forceDownload(this);">
-                                                <i class="fas fa-download"></i> Télécharger
-                                            </a>
-                                        </div>
+                                        <a href="{% url 'proxy_download' msg.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-download"></i> Télécharger
+                                        </a>
                                     </div>
                                 </div>
                             {% elif msg.media_type == 'audio' %}
@@ -258,34 +232,6 @@
             }
         }
     }
-    function forceDownload(link) {
-        // Crée un lien temporaire invisible
-        const tempLink = document.createElement('a');
-        tempLink.href = link.href;
-        tempLink.setAttribute('download', link.getAttribute('download') || 'file');
-        tempLink.setAttribute('target', '_blank');
-        
-        // Ajoute des paramètres pour forcer le téléchargement
-        if (link.href.includes('amazonaws.com')) {
-            tempLink.href += (link.href.includes('?') ? '&' : '?') + 
-                            'response-content-disposition=attachment';
-        }
-        
-        document.body.appendChild(tempLink);
-        tempLink.click();
-        document.body.removeChild(tempLink);
-        
-        // Empêche le comportement par défaut
-        return false;
-    }
-
-    // Applique le forceDownload à tous les liens existants
-    document.querySelectorAll('a[download]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            forceDownload(this);
-        });
-    });
 </script>
 </body>
 </html>
