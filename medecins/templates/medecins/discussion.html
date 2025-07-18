@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -23,6 +24,21 @@
         }
         .jitsi-btn {
             margin-top: 10px;
+        }
+        .media-container {
+            text-align: center;
+            padding: 10px;
+        }
+        .media-container img, .media-container video {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .media-actions {
+            margin-top: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
         }
     </style>
 </head>
@@ -67,7 +83,7 @@
     </div>
 
     <div class="chat-container border p-3 mb-4" style="height: 500px; overflow-y: auto; background-color: #f8f9fa;">
-        {% for msg in messages %}
+        {% for msg in all_messages %}
             <div class="d-flex flex-column {% if msg.emetteur_type == 'MEDECIN' %}align-items-end{% else %}align-items-start{% endif %}">
                 <div class="message-container">
                     <div class="d-flex justify-content-between mb-1">
@@ -85,13 +101,63 @@
                         <span class="message-time">{{ msg.timestamp|date:"H:i d/m/Y" }}</span>
                     </div>
                     
+                    <!-- Contenu du message ou média -->
                     <div class="alert 
                         {% if msg.emetteur_type == 'MEDECIN' %}alert-primary
                         {% elif msg.emetteur_type == 'PATIENT' %}alert-success
                         {% elif msg.emetteur_type == 'BOT' %}alert-secondary
                         {% else %}alert-warning{% endif %}">
                         
-                        {% if "Lien pour la consultation vidéo:" in msg.contenu %}
+                        {% if msg|class_name == 'MediaMessage' %}
+                            <!-- Affichage des médias -->
+                            {% if msg.media_type == 'image' %}
+                                <div class="media-container">
+                                    <img src="{{ msg.file_url }}" alt="Image envoyée par le patient" 
+                                        class="img-fluid rounded" style="max-height: 300px;">
+                                    <div class="mt-2">
+                                        <a href="{{ msg.file_url }}" target="_blank" class="btn btn-sm btn-outline-dark">
+                                            <i class="fas fa-expand"></i> Agrandir
+                                        </a>
+                                        <a href="{{ msg.file_url }}" download class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-download"></i> Télécharger
+                                        </a>
+                                    </div>
+                                </div>
+                            {% elif msg.media_type == 'audio' %}
+                                <div class="media-container">
+                                    <audio controls class="w-100">
+                                        <source src="{{ msg.file_url }}" type="{{ msg.mime_type }}">
+                                        Votre navigateur ne supporte pas l'élément audio.
+                                    </audio>
+                                    <div class="mt-2">
+                                        <a href="{{ msg.file_url }}" download class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-download"></i> Télécharger
+                                        </a>
+                                    </div>
+                                </div>
+                            {% elif msg.media_type == 'video' %}
+                                <div class="media-container">
+                                    <video controls class="w-100" style="max-height: 300px;">
+                                        <source src="{{ msg.file_url }}" type="{{ msg.mime_type }}">
+                                        Votre navigateur ne supporte pas l'élément vidéo.
+                                    </video>
+                                    <div class="mt-2">
+                                        <a href="{{ msg.file_url }}" download class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-download"></i> Télécharger
+                                        </a>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="media-container">
+                                    <i class="fas fa-file fa-2x mb-2"></i>
+                                    <p>{{ msg.file_name }}</p>
+                                    <a href="{{ msg.file_url }}" download class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download"></i> Télécharger
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% elif "Lien pour la consultation vidéo:" in msg.contenu %}
+                            <!-- Gestion des liens Jitsi (existant) -->
                             <div>
                                 <p>{{ msg.contenu|linebreaksbr }}</p>
                                 <button onclick="joinJitsiCall('{{ msg.contenu|slice:"34:" }}')" 
@@ -100,16 +166,14 @@
                                 </button>
                             </div>
                         {% else %}
+                            <!-- Messages texte normaux -->
                             {{ msg.contenu|linebreaksbr }}
                         {% endif %}
                     </div>
                 </div>
             </div>
         {% empty %}
-            <div class="text-center text-muted my-5">
-                <i class="fas fa-comment-alt" style="font-size: 3rem;"></i>
-                <p class="mt-2">Aucun message échangé pour le moment</p>
-            </div>
+            <!-- Message vide (inchangé) -->
         {% endfor %}
     </div>
 

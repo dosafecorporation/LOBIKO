@@ -1,4 +1,5 @@
 from asyncio.log import logger
+from itertools import chain
 from django.utils import timezone
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
@@ -9,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 import requests
 from django.contrib import messages as django_messages
 from .forms import MedecinInscriptionForm, MedecinLoginForm, MessageForm
-from lobiko.models import Medecin, Message, SessionDiscussion
+from lobiko.models import Medecin, MediaMessage, Message, SessionDiscussion
 import secrets
 from urllib.parse import quote
 
@@ -102,8 +103,16 @@ def discussion_session(request, session_id):
     if session.medecin and session.medecin != medecin:
         return redirect('dashboard_medecin')
 
-    # Récupération des messages
+    # Récupération des messages et des médias
     messages_list = Message.objects.filter(session=session).order_by('timestamp')
+    media_files = MediaMessage.objects.filter(session=session).order_by('timestamp')
+
+    # Fusionner les messages et médias par ordre chronologique
+    all_messages = sorted(
+        chain(messages_list, media_files),
+        key=lambda x: x.timestamp
+    )
+
     form = MessageForm(request.POST or None)
 
     if request.method == "POST":
@@ -168,7 +177,7 @@ def discussion_session(request, session_id):
     return render(request, 'medecins/discussion.html', {
         'medecin': medecin,
         'session': session,
-        'messages': messages_list,
+        'all_messages': all_messages,
         'form': form,
     })
 
