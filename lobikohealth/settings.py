@@ -162,6 +162,9 @@ AWS_S3_REGION_NAME = 'eu-west-3'  # Région S3
 AWS_S3_CUSTOM_DOMAIN = f'{os.getenv("AWS_STORAGE_BUCKET_NAME")}.s3.amazonaws.com'  # URL de téléchargement
 AWS_DEFAULT_ACL = 'public-read'  # Permissions par défaut (si fichiers publics)
 AWS_QUERYSTRING_AUTH = False  # Désactive les URL signées (optionnel)
-
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400', # Exemple: met en cache les fichiers pendant 24h
+    'ContentDisposition': 'attachment', # C'est la ligne clé !
+}
 # Stockage des médias
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'

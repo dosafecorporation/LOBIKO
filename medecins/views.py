@@ -1,7 +1,8 @@
 from asyncio.log import logger
 from itertools import chain
+import boto3
 from django.utils import timezone
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.urls import reverse
@@ -9,10 +10,12 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 import requests
 from django.contrib import messages as django_messages
+from botocore.exceptions import ClientError
+from lobikohealth import settings
 from .forms import MedecinInscriptionForm, MedecinLoginForm, MessageForm
 from lobiko.models import Medecin, MediaMessage, Message, SessionDiscussion
 import secrets
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 def inscription_medecin(request):
     if request.method == "POST":
@@ -266,3 +269,52 @@ def proxy_download(request, session_id, media_id):
     )
     
     return file_response
+
+def download_media_file(request, session_id, media_id):
+    media = get_object_or_404(MediaMessage, id=media_id)
+    
+    medecin_id = request.session.get('medecin_id')
+    if not medecin_id:
+        return redirect('login_medecin')
+
+    medecin = get_object_or_404(Medecin, id=medecin_id)
+    session = get_object_or_404(SessionDiscussion, id=session_id)
+
+    # Vérification des permissions
+    if session.medecin != medecin:
+        return redirect('dashboard_medecin')
+
+    try:
+        # Analyse l'URL pour extraire le chemin de l'objet S3
+        parsed_url = urlparse(media.file_url)
+        
+        # Le chemin de l'objet dans S3 est généralement le 'path' de l'URL,
+        # sans le premier slash s'il y en a un.
+        object_key = parsed_url.path.lstrip('/')
+        bucket_name = settings.AWS_STORAGE_BUCKET_NAME
+
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_S3_REGION_NAME
+        )
+
+        # Extrait le nom du fichier pour le Content-Disposition
+        filename = object_key.split('/')[-1]
+
+        # Générer une URL signée pour le téléchargement
+        response = s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': bucket_name,
+                'Key': object_key,
+                'ResponseContentDisposition': f'attachment; filename="{filename}"'
+            },
+            ExpiresIn=300 # L'URL sera valide pendant 300 secondes (5 minutes)
+        )
+        return HttpResponseRedirect(response)
+    except ClientError as e:
+        return HttpResponse(f"Erreur S3 lors de la génération du lien de téléchargement : {e}", status=500)
+    except Exception as e:
+        return HttpResponse(f"Une erreur inattendue s'est produite : {e}", status=500)
