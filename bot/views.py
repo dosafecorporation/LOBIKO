@@ -15,6 +15,8 @@ import boto3
 from botocore.exceptions import ClientError
 from django.core.files.base import ContentFile
 from lobikohealth.settings import AWS_S3_MEDIA_FOLDER
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 logger = logging.getLogger(__name__)
 
@@ -350,6 +352,17 @@ def webhook(request):
                         emetteur_type='PATIENT',
                         emetteur_id=patient.id
                     )
+
+                    # Notification WebSocket
+                    send_discussion_update(session, 'message', {
+                        'id': message.id,
+                        'content': content,
+                        'sender': 'patient',
+                        'timestamp': str(message.timestamp),
+                        'type': 'text'
+                    })
+
+
                     return JsonResponse({"status": "message saved"})
 
                 # Salutation et proposition de consultation
@@ -435,6 +448,15 @@ def recevoir_message_medecin(request):
             
             # Envoi au patient
             send_whatsapp_message(session.patient.telephone, patient_message)
+
+            # Notification WebSocket
+            send_discussion_update(session_id, 'message', {
+                'id': message.id,
+                'content': patient_message,
+                'sender': 'medecin',
+                'timestamp': str(message.timestamp),
+                'type': 'text'
+            })
             
             return JsonResponse({
                 "status": "session closed",
@@ -452,6 +474,15 @@ def recevoir_message_medecin(request):
 
         # Envoi au patient
         send_whatsapp_message(session.patient.telephone, message_content)
+
+        # Notification WebSocket
+        send_discussion_update(session_id, 'message', {
+            'id': message.id,
+            'content': message_content,
+            'sender': 'medecin',
+            'timestamp': str(message.timestamp),
+            'type': 'text'
+        })
 
         return JsonResponse({
             "status": "success",
@@ -570,6 +601,16 @@ def handle_media_message(from_number, media_data):
             emetteur_type='PATIENT',
             emetteur_id=patient.id
         )
+
+        # Notification WebSocket
+        send_discussion_update(active_session.id, 'media', {
+            'id': media.id,
+            'url': upload_result['url'],
+            'type': media_type,
+            'name': file_name,
+            'sender': 'patient',
+            'timestamp': str(media.timestamp)
+        })
         
         logger.info(f"Média enregistré: {file_name} (type: {media_type}, taille: {len(media_content.content)} octets)")
         return None
@@ -580,3 +621,13 @@ def handle_media_message(from_number, media_data):
         logger.error(f"Erreur traitement média: {str(e)}", exc_info=True)
     
     return None
+
+def send_discussion_update(session_id, message_type, data):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"discussion_{session_id}",
+        {
+            "type": f"new_{message_type}",
+            "data": data
+        }
+    )

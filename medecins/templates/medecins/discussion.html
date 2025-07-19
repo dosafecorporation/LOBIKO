@@ -232,6 +232,76 @@
             }
         }
     }
+
+    const sessionId = {{ session.id }};
+    const discussionSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/discussion/' + sessionId + '/'
+    );
+
+    discussionSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const messageData = data.data;
+        
+        if (data.type === 'new_message') {
+            addNewMessage({
+                id: messageData.id,
+                content: messageData.content,
+                sender: messageData.sender,
+                timestamp: messageData.timestamp
+            });
+        } else if (data.type === 'new_media') {
+            addNewMedia({
+                id: messageData.id,
+                url: messageData.url,
+                type: messageData.type,
+                name: messageData.name,
+                sender: messageData.sender,
+                timestamp: messageData.timestamp
+            });
+        }
+    };
+
+    function addNewMessage(data) {
+        const chatContainer = document.querySelector('.chat-container');
+        const messageHtml = `
+            <div class="d-flex flex-column ${data.sender === 'medecin' ? 'align-items-end' : 'align-items-start'}">
+                <div class="message-container">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="badge ${data.sender === 'medecin' ? 'bg-primary' : 'bg-success'}">
+                            ${data.sender === 'medecin' ? 'Vous' : 'Patient'}
+                        </span>
+                        <span class="message-time">${new Date(data.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div class="alert ${data.sender === 'medecin' ? 'alert-primary' : 'alert-success'}">
+                        ${data.content}
+                    </div>
+                </div>
+            </div>
+        `;
+        chatContainer.insertAdjacentHTML('beforeend', messageHtml);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    function addNewMedia(data) {
+        const chatContainer = document.querySelector('.chat-container');
+        const messageHtml = `
+            <div class="d-flex flex-column ${data.sender === 'medecin' ? 'align-items-end' : 'align-items-start'}">
+                <div class="message-container">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="badge ${data.sender === 'medecin' ? 'bg-primary' : 'bg-success'}">
+                            ${data.sender === 'medecin' ? 'Vous' : 'Patient'}
+                        </span>
+                        <span class="message-time">${new Date(data.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div class="alert ${data.sender === 'medecin' ? 'alert-primary' : 'alert-success'}">
+                        ${data.content}
+                    </div>
+                </div>
+            </div>
+        `;
+        chatContainer.insertAdjacentHTML('beforeend', messageHtml);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
 </script>
 </body>
 </html>

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'bot',
     'medecins',
     'storages',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -168,3 +169,15 @@ AWS_S3_OBJECT_PARAMETERS = {
 }
 # Stockage des médias
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# Configuration pour websocket
+ASGI_APPLICATION = 'lobikohealth.routing.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}

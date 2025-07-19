@@ -295,3 +295,13 @@ def proxy_download(request, session_id, media_id):
             
     except (MediaMessage.DoesNotExist, Medecin.DoesNotExist):
         raise Http404("Ressource introuvable")
+    
+def send_dashboard_update():
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "dashboard_updates",
+        {
+            "type": "dashboard.update",
+            "message": "Nouvelles données disponibles"
+        }
+    )

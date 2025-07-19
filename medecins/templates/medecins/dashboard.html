@@ -305,5 +305,24 @@
         </form>
     </div>
 </div>
+
+<script>
+const dashboardSocket = new WebSocket(
+    'ws://' + window.location.host + '/ws/dashboard/'
+);
+
+dashboardSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    if (data.message === "Nouvelles données disponibles") {
+        // Recharger les données
+        fetch('/dashboard/updates/')
+            .then(response => response.json())
+            .then(data => {
+                // Mettre à jour l'interface
+                updateDashboard(data);
+            });
+    }
+};
+</script>
 {% endblock %}
 
