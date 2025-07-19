@@ -364,7 +364,7 @@ def webhook(request):
                             'id': str(uuid.uuid4()),
                             'content': content,
                             'sender': 'patient',
-                            'timestamp': str(message.timestamp),
+                            'timestamp': str(now()),
                             'type': 'text'
                         }
                     )
