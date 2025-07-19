@@ -171,7 +171,7 @@ AWS_S3_OBJECT_PARAMETERS = {
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # Configuration pour websocket
-ASGI_APPLICATION = 'lobikohealth.routing.application'
+ASGI_APPLICATION = 'lobikohealth.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
