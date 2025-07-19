@@ -591,7 +591,7 @@ def handle_media_message(from_number, media_data):
             return None
         
         # Enregistrement en base de données
-        MediaMessage.objects.create(
+        media = MediaMessage.objects.create(
             session=active_session,
             media_type=media_type,
             file_url=upload_result['url'],

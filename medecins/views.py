@@ -16,6 +16,8 @@ from .forms import MedecinInscriptionForm, MedecinLoginForm, MessageForm
 from lobiko.models import Medecin, MediaMessage, Message, SessionDiscussion
 import secrets
 from urllib.parse import quote, urlparse
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 def inscription_medecin(request):
     if request.method == "POST":

@@ -33,6 +33,8 @@ ALLOWED_HOSTS = ["lobiko.onrender.com", "127.0.0.1"]
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,7 +46,6 @@ INSTALLED_APPS = [
     'bot',
     'medecins',
     'storages',
-    'channels',
 ]
 
 MIDDLEWARE = [
