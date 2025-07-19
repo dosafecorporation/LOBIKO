@@ -283,6 +283,7 @@ class MediaMessage(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     emetteur_type = models.CharField(max_length=10, choices=Message.EMETTEUR_TYPE_CHOICES)
     emetteur_id = models.PositiveIntegerField()
+    s3_key = models.CharField(max_length=500)
 
     def __str__(self):
         return f"{self.get_media_type_display()} - {self.file_name}"

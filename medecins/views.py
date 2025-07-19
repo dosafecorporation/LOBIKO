@@ -2,7 +2,7 @@ from asyncio.log import logger
 from itertools import chain
 import boto3
 from django.utils import timezone
-from django.http import FileResponse, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.urls import reverse
@@ -245,8 +245,6 @@ def initier_appel_jitsi(request, session_id):
     return redirect('discussion_session', session_id=session_id)
 
 def proxy_download(request, session_id, media_id):
-    media = get_object_or_404(MediaMessage, id=media_id)
-    
     medecin_id = request.session.get('medecin_id')
     if not medecin_id:
         return redirect('login_medecin')
@@ -258,17 +256,45 @@ def proxy_download(request, session_id, media_id):
     if session.medecin != medecin:
         return redirect('dashboard_medecin')
     
-    response = requests.get(media.file_url, stream=True)
-    response.raise_for_status()
-    
-    file_response = FileResponse(
-        response.raw,
-        content_type=response.headers['Content-Type'],
-        as_attachment=True,
-        filename=media.file_name
-    )
-    
-    return file_response
+    try:
+        media = MediaMessage.objects.get(id=media_id)
+        
+        # Vérification des permissions
+        if not request.session.get('medecin_id'):
+            raise Http404
+        
+        medecin = Medecin.objects.get(id=request.session['medecin_id'])
+        if media.session.medecin != medecin:
+            raise Http404
+        
+        s3 = boto3.client('s3',
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_S3_REGION_NAME
+        )
+        
+        try:
+            # Utilisez la clé S3 stockée dans le modèle
+            response = s3.get_object(
+                Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+                Key=media.s3_key
+            )
+            
+            # Créez la réponse avec les bons headers
+            file_response = FileResponse(
+                response['Body'],
+                content_type=response['ContentType'],
+                as_attachment=True,
+                filename=media.file_name  # Utilise le nom stocké en BDD
+            )
+            return file_response
+            
+        except ClientError as e:
+            logger.error(f"Erreur S3: {str(e)}")
+            raise Http404("Fichier introuvable sur S3")
+            
+    except (MediaMessage.DoesNotExist, Medecin.DoesNotExist):
+        raise Http404("Ressource introuvable")
 
 def download_media_file(request, session_id, media_id):
     media = get_object_or_404(MediaMessage, id=media_id)

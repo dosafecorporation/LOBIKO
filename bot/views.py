@@ -1,3 +1,4 @@
+from fileinput import filename
 import json
 import mimetypes
 import uuid
@@ -473,8 +474,7 @@ def upload_to_s3(file_data, file_name, mime_type):
         region_name=settings.AWS_S3_REGION_NAME
     )
     
-    unique_name = f"{uuid.uuid4()}-{file_name}"
-    s3_key = f"{AWS_S3_MEDIA_FOLDER}{unique_name}"
+    s3_key = f"{AWS_S3_MEDIA_FOLDER}{file_name}"
     
     try:
         s3.upload_fileobj(
@@ -486,7 +486,10 @@ def upload_to_s3(file_data, file_name, mime_type):
                 'ACL': 'public-read' if settings.AWS_DEFAULT_ACL == 'public-read' else 'private'
             }
         )
-        return f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_key}"
+        return {
+            'url': f"https://{settings.AWS_S3_CUSTOM_DOMAIN}/{s3_key}",
+            's3_key': s3_key  # Retourne aussi la clé S3 exacte
+        }
     except ClientError as e:
         logger.error(f"Erreur upload S3: {str(e)}")
         return None
@@ -520,25 +523,23 @@ def handle_media_message(from_number, media_data):
         media_content.raise_for_status()
         
         # Upload vers S3
-        file_name = media_data.get('filename', f"file-{uuid.uuid4()}")
-        mime_type = media_data.get('mime_type', mimetypes.guess_type(file_name)[0] or 'application/octet-stream')
-        
-        file_url = upload_to_s3(
+        upload_result = upload_to_s3(
             media_content.content,
-            file_name,
-            mime_type
+            filename,  # Utilise le nom généré précédemment
+            mimetypes
         )
         
-        if not file_url:
-            return "❌ Erreur lors du traitement de votre fichier."
+        if not upload_result:
+            return None
         
         # Enregistrement en base de données
         MediaMessage.objects.create(
             session=active_session,
             media_type=media_type,
-            file_url=file_url,
-            file_name=file_name,
-            mime_type=mime_type,
+            file_url=upload_result['url'],
+            file_name=filename,  # Nom complet avec extension
+            s3_key=upload_result['s3_key'],  # Stocke la clé S3 exacte
+            mime_type=mimetypes,
             emetteur_type='PATIENT',
             emetteur_id=patient.id
         )
