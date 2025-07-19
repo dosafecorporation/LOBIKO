@@ -361,7 +361,7 @@ def webhook(request):
                         session_id=active_session.id,
                         message_type='message',
                         data={
-                            'id': message.id,
+                            'id': str(uuid.uuid4()),
                             'content': content,
                             'sender': 'patient',
                             'timestamp': str(message.timestamp),
