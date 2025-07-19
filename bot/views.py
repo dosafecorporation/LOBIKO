@@ -1,4 +1,3 @@
-from fileinput import filename
 import json
 import mimetypes
 import uuid
@@ -498,6 +497,7 @@ def handle_media_message(from_number, media_data):
     """Gère les messages média (image, audio, document, etc.)"""
     patient = Patient.objects.filter(telephone=from_number).first()
     if not patient:
+        logger.warning(f"Patient non trouvé pour le numéro {from_number}")
         return None
     
     # Vérifier la session active
@@ -507,29 +507,56 @@ def handle_media_message(from_number, media_data):
     ).order_by('-date_debut').first()
     
     if not active_session:
-        return "❌ Commencez par demander une consultation avant de pouvoir envoyer des média à un médeci. Merci !."
+        logger.warning(f"Aucune session active pour le patient {patient.id}")
+        return None
     
     try:
         media_type = media_data.get('type')
         media_id = media_data.get('id')
         
-        # Récupérer le média depuis l'API WhatsApp
-        url = f"https://graph.facebook.com/v18.0/{media_id}"
+        # Récupérer les métadonnées du média depuis WhatsApp
+        media_info_url = f"https://graph.facebook.com/v18.0/{media_id}"
         headers = {"Authorization": f"Bearer {settings.ACCESS_TOKEN}"}
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
         
-        media_content = requests.get(response.json().get('url'), headers=headers)
+        # Première requête pour obtenir les métadonnées
+        info_response = requests.get(media_info_url, headers=headers)
+        info_response.raise_for_status()
+        media_info = info_response.json()
+        
+        # Deuxième requête pour obtenir le contenu
+        media_content = requests.get(media_info['url'], headers=headers)
         media_content.raise_for_status()
-        
+
+        # Déterminer le nom du fichier
+        file_name = media_data.get('filename', '')
+        if not file_name:
+            # Générer un nom de fichier si WhatsApp n'en fournit pas
+            extension = {
+                'image/jpeg': '.jpg',
+                'image/png': '.png',
+                'audio/ogg': '.ogg',
+                'video/mp4': '.mp4',
+                'application/pdf': '.pdf'
+            }.get(media_info.get('mime_type'), '.bin')
+            file_name = f"{media_type}-{uuid.uuid4()}{extension}"
+
+        # Déterminer le type MIME
+        mime_type = (
+            media_data.get('mime_type') or 
+            media_info.get('mime_type') or 
+            mimetypes.guess_type(file_name)[0] or 
+            'application/octet-stream'
+        )
+
         # Upload vers S3
         upload_result = upload_to_s3(
             media_content.content,
-            filename,  # Utilise le nom généré précédemment
-            mimetypes
+            file_name,
+            mime_type
         )
         
         if not upload_result:
+            logger.error("Échec de l'upload S3")
             return None
         
         # Enregistrement en base de données
@@ -537,19 +564,19 @@ def handle_media_message(from_number, media_data):
             session=active_session,
             media_type=media_type,
             file_url=upload_result['url'],
-            file_name=filename,  # Nom complet avec extension
-            s3_key=upload_result['s3_key'],  # Stocke la clé S3 exacte
-            mime_type=mimetypes,
+            file_name=file_name,
+            s3_key=upload_result['s3_key'],
+            mime_type=mime_type,
             emetteur_type='PATIENT',
             emetteur_id=patient.id
         )
         
-        logger.info(f"Média {media_type} enregistré pour le patient {patient.id}, session {active_session.id}")
+        logger.info(f"Média enregistré: {file_name} (type: {media_type}, taille: {len(media_content.content)} octets)")
         return None
     
     except requests.exceptions.RequestException as e:
         logger.error(f"Erreur API WhatsApp: {str(e)}")
     except Exception as e:
-        logger.error(f"Erreur traitement média: {str(e)}")
+        logger.error(f"Erreur traitement média: {str(e)}", exc_info=True)
     
     return None
