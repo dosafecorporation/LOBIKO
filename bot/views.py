@@ -354,7 +354,7 @@ def webhook(request):
                     )
 
                     # Notification WebSocket
-                    send_discussion_update(session, 'message', {
+                    send_discussion_update(active_session.id, 'message', {
                         'id': message.id,
                         'content': content,
                         'sender': 'patient',
