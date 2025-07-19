@@ -130,7 +130,7 @@
                                         Votre navigateur ne supporte pas l'élément audio.
                                     </audio>
                                     <div class="mt-2">
-                                        <a href="{{ msg.file_url }}" download class="btn btn-sm btn-outline-primary">
+                                        <a href="{% url 'proxy_download' session.id msg.id %}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-download"></i> Télécharger
                                         </a>
                                     </div>
@@ -142,7 +142,7 @@
                                         Votre navigateur ne supporte pas l'élément vidéo.
                                     </video>
                                     <div class="mt-2">
-                                        <a href="{{ msg.file_url }}" download class="btn btn-sm btn-outline-primary">
+                                        <a href="{% url 'proxy_download' session.id msg.id %}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-download"></i> Télécharger
                                         </a>
                                     </div>
@@ -151,7 +151,7 @@
                                 <div class="media-container">
                                     <i class="fas fa-file fa-2x mb-2"></i>
                                     <p>{{ msg.file_name }}</p>
-                                    <a href="{{ msg.file_url }}" download class="btn btn-sm btn-outline-primary">
+                                    <a href="{% url 'proxy_download' session.id msg.id %}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-download"></i> Télécharger
                                     </a>
                                 </div>
