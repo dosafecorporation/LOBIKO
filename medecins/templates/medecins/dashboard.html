@@ -315,13 +315,16 @@ dashboardSocket.onmessage = function(e) {
     const data = JSON.parse(e.data);
     if (data.message === "Nouvelles données disponibles") {
         // Recharger les données
-        fetch('/dashboard/updates/')
-            .then(response => response.json())
-            .then(data => {
-                // Mettre à jour l'interface
-                updateDashboard(data);
-            });
+        window.location.reload();
     }
+};
+dashboardSocket.onclose = function(e) {
+    console.error('WebSocket fermé de manière inattendue');
+};
+
+// Pour tester la connexion
+dashboardSocket.onopen = function(e) {
+    console.log('WebSocket connecté avec succès');
 };
 </script>
 {% endblock %}

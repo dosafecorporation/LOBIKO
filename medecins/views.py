@@ -303,7 +303,7 @@ def send_dashboard_update():
     async_to_sync(channel_layer.group_send)(
         "dashboard_updates",
         {
-            "type": "dashboard.update",
+            "type": "dashboard_update",
             "message": "Nouvelles données disponibles"
         }
     )
