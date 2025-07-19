@@ -308,7 +308,7 @@
 
 <script>
 const dashboardSocket = new WebSocket(
-    'ws://' + window.location.host + '/ws/dashboard/'
+    'wss://' + window.location.host + '/ws/dashboard/'
 );
 
 dashboardSocket.onmessage = function(e) {

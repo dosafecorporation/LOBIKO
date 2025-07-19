@@ -235,7 +235,7 @@
 
     const sessionId = {{ session.id }};
     const discussionSocket = new WebSocket(
-        'ws://' + window.location.host + '/ws/discussion/' + sessionId + '/'
+        'wss://' + window.location.host + '/ws/discussion/' + sessionId + '/'
     );
 
     discussionSocket.onmessage = function(e) {
