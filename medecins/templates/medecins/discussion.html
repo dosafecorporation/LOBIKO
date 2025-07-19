@@ -270,10 +270,6 @@
                 messageInput.focus();
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("Erreur lors de l'envoi du message");
-        });
     });
 
     // Gestion de la fermeture de session avec AJAX
@@ -360,7 +356,7 @@
                         <a href="${data.url}" target="_blank" class="btn btn-sm btn-outline-dark">
                             <i class="fas fa-expand"></i> Agrandir
                         </a>
-                        <a href="/medecins/proxy_download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                        <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-download"></i> Télécharger
                         </a>
                     </div>
@@ -374,7 +370,7 @@
                         Votre navigateur ne supporte pas l'élément audio.
                     </audio>
                     <div class="mt-2">
-                        <a href="/medecins/proxy_download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                        <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-download"></i> Télécharger
                         </a>
                     </div>
@@ -388,7 +384,7 @@
                         Votre navigateur ne supporte pas l'élément vidéo.
                     </video>
                     <div class="mt-2">
-                        <a href="/medecins/proxy_download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                        <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-download"></i> Télécharger
                         </a>
                     </div>
@@ -399,7 +395,7 @@
                 <div class="media-container">
                     <i class="fas fa-file fa-2x mb-2"></i>
                     <p>${data.name}</p>
-                    <a href="/medecins/proxy_download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                    <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-download"></i> Télécharger
                     </a>
                 </div>
