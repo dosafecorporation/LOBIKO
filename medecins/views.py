@@ -89,7 +89,8 @@ def accepter_session(request, session_id):
     if session.medecin is None and session.date_fin is None:
         session.medecin = medecin
         session.save()
-        # Rediriger vers la page de discussion avec ce patient (à créer)
+        # Rediriger vers la page de discussion avec ce patient
+        send_dashboard_update()
         return redirect('discussion_session', session_id=session.id)
 
     # Sinon on revient au dashboard
@@ -304,6 +305,6 @@ def send_dashboard_update():
         "dashboard_updates",
         {
             "type": "dashboard_update",
-            "message": "Nouvelles données disponibles"
+            "message": "Mise à jour sur les consultations"
         }
     )

@@ -197,7 +197,7 @@
             Liste des Consultations
         </h3>
         <div class="table-container">
-            <table class="custom-table">
+            <table class="custom-table" id="discussion_en_attente">
                 <thead>
                     <tr>
                         <th>Patient</th>
@@ -313,18 +313,17 @@ const dashboardSocket = new WebSocket(
 
 dashboardSocket.onmessage = function(e) {
     const data = JSON.parse(e.data);
-    if (data.message === "Nouvelles données disponibles") {
+    if (data.message === "Mise à jour sur les consultations") {
         // Recharger les données
-        window.location.reload();
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const newDocument = parser.parseFromString(html, 'text/html');
+                document.getElementById('discussion_en_attente').innerHTML = 
+                    newDocument.getElementById('discussion_en_attente').innerHTML;
+            });
     }
-};
-dashboardSocket.onclose = function(e) {
-    console.error('WebSocket fermé de manière inattendue');
-};
-
-// Pour tester la connexion
-dashboardSocket.onopen = function(e) {
-    console.log('WebSocket connecté avec succès');
 };
 </script>
 {% endblock %}
