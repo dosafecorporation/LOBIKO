@@ -18,6 +18,8 @@ from lobikohealth.settings import AWS_S3_MEDIA_FOLDER
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
+from medecins.views import send_dashboard_update
+
 logger = logging.getLogger(__name__)
 
 # Configuration
@@ -327,6 +329,7 @@ def webhook(request):
                     if content == 'oui':
                         if not active_session:
                             session = create_patient_session(patient)
+                            send_dashboard_update()
                             send_whatsapp_message(from_number, "✅ Votre demande a été enregistrée. Un médecin va vous contacter. Tapez 'stop consultation' pour annuler.")
                         else:
                             send_whatsapp_message(from_number, "✅ Votre demande est déjà en cours. Un médecin va vous répondre.")
