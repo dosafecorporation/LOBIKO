@@ -356,14 +356,18 @@ def webhook(request):
                         emetteur_id=patient.id
                     )
 
-                    # Notification WebSocket
-                    send_discussion_update(active_session.id, 'message', {
-                        'id': message.id,
-                        'content': content,
-                        'sender': 'patient',
-                        'timestamp': str(message.timestamp),
-                        'type': 'text'
-                    })
+                    # Envoi de la notification via WebSocket
+                    send_discussion_update(
+                        session_id=active_session.id,
+                        message_type='message',
+                        data={
+                            'id': message.id,
+                            'content': content,
+                            'sender': 'patient',
+                            'timestamp': str(message.timestamp),
+                            'type': 'text'
+                        }
+                    )
 
 
                     return JsonResponse({"status": "message saved"})
@@ -451,15 +455,6 @@ def recevoir_message_medecin(request):
             
             # Envoi au patient
             send_whatsapp_message(session.patient.telephone, patient_message)
-
-            # Notification WebSocket
-            send_discussion_update(session_id, 'message', {
-                'id': message.id,
-                'content': patient_message,
-                'sender': 'medecin',
-                'timestamp': str(message.timestamp),
-                'type': 'text'
-            })
             
             return JsonResponse({
                 "status": "session closed",
@@ -478,14 +473,18 @@ def recevoir_message_medecin(request):
         # Envoi au patient
         send_whatsapp_message(session.patient.telephone, message_content)
 
-        # Notification WebSocket
-        send_discussion_update(session_id, 'message', {
-            'id': message.id,
-            'content': message_content,
-            'sender': 'medecin',
-            'timestamp': str(message.timestamp),
-            'type': 'text'
-        })
+        # Envoi de la notification via WebSocket
+        send_discussion_update(
+            session_id=session_id,
+            message_type='message',
+            data={
+                'id': message.id,
+                'content': message_content,
+                'sender': 'medecin',
+                'timestamp': str(message.timestamp),
+                'type': 'text'
+            }
+        )
 
         return JsonResponse({
             "status": "success",
@@ -606,14 +605,19 @@ def handle_media_message(from_number, media_data):
         )
 
         # Notification WebSocket
-        send_discussion_update(active_session.id, 'media', {
-            'id': media.id,
-            'url': upload_result['url'],
-            'type': media_type,
-            'name': file_name,
-            'sender': 'patient',
-            'timestamp': str(media.timestamp)
-        })
+        send_discussion_update(
+            session_id=active_session.id,
+            message_type='media',
+            data={
+                'id': media.id,
+                'url': upload_result['url'],
+                'type': media_type,
+                'name': file_name,
+                'sender': 'patient',
+                'timestamp': str(media.timestamp),
+                'mime_type': mime_type
+            }
+        )
         
         logger.info(f"Média enregistré: {file_name} (type: {media_type}, taille: {len(media_content.content)} octets)")
         return None

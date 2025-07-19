@@ -35,16 +35,7 @@ class DiscussionConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
-        message = data['message']
-
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'discussion_message',
-                'message': message
-            }
-        )
+        pass
 
     async def discussion_message(self, event):
         message = event['message']
@@ -53,7 +44,15 @@ class DiscussionConsumer(AsyncWebsocketConsumer):
         }))
 
     async def new_message(self, event):
-        await self.send(text_data=json.dumps(event))
+        # Envoie les messages aux clients
+        await self.send(text_data=json.dumps({
+            'type': 'new_message',
+            'data': event['data']
+        }))
 
     async def new_media(self, event):
-        await self.send(text_data=json.dumps(event))
+        # Envoie les médias aux clients
+        await self.send(text_data=json.dumps({
+            'type': 'new_media',
+            'data': event['data']
+        }))
