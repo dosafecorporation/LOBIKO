@@ -187,7 +187,7 @@
         </form>
     </div>
 
-    <form method="POST" class="mb-3">
+    <form id="messageForm" method="POST" class="mb-3">
         {% csrf_token %}
         <div class="input-group">
             {{ form.message }}
@@ -232,6 +232,70 @@
             }
         }
     }
+    
+    document.getElementById('messageForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const messageInput = this.querySelector('textarea');
+        const messageContent = messageInput.value.trim();
+        
+        if (!messageContent) return;
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                // Ajouter le message à l'interface
+                addNewMessage({
+                    id: data.message_id,
+                    content: messageContent,
+                    sender: 'medecin',
+                    timestamp: data.timestamp,
+                    type: 'text'
+                });
+                
+                // Vider le champ et remettre le focus
+                messageInput.value = '';
+                messageInput.focus();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Erreur lors de l'envoi du message");
+        });
+    });
+
+    // Gestion de la fermeture de session avec AJAX
+    document.querySelector('form[action*="close_session"]')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!confirm("Voulez-vous vraiment terminer cette consultation ?")) return;
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: new FormData(this),
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload(); // Recharger pour afficher le statut "terminé"
+            }
+        });
+    });
 
     const sessionId = {{ session.id }};
     const discussionSocket = new WebSocket(
@@ -296,7 +360,7 @@
                         <a href="${data.url}" target="_blank" class="btn btn-sm btn-outline-dark">
                             <i class="fas fa-expand"></i> Agrandir
                         </a>
-                        <a href="/media/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                        <a href="/medecins/proxy_download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-download"></i> Télécharger
                         </a>
                     </div>
@@ -310,7 +374,21 @@
                         Votre navigateur ne supporte pas l'élément audio.
                     </audio>
                     <div class="mt-2">
-                        <a href="/media/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                        <a href="/medecins/proxy_download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download"></i> Télécharger
+                        </a>
+                    </div>
+                </div>
+            `;
+        } else if (data.type === 'video') {
+            mediaContent = `
+                <div class="media-container">
+                    <video controls class="w-100" style="max-height: 300px;">
+                        <source src="${data.url}" type="${data.mime_type}">
+                        Votre navigateur ne supporte pas l'élément vidéo.
+                    </video>
+                    <div class="mt-2">
+                        <a href="/medecins/proxy_download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-download"></i> Télécharger
                         </a>
                     </div>
@@ -321,7 +399,7 @@
                 <div class="media-container">
                     <i class="fas fa-file fa-2x mb-2"></i>
                     <p>${data.name}</p>
-                    <a href="/media/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                    <a href="/medecins/proxy_download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
                         <i class="fas fa-download"></i> Télécharger
                     </a>
                 </div>
