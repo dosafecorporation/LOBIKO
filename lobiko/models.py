@@ -3,6 +3,9 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.validators import RegexValidator
 
+from decimal import Decimal
+from django.utils import timezone
+
 # Définition des choix communs
 class Choices:
     SEXE = [('H', 'Homme'), ('F', 'Femme')]
@@ -218,14 +221,42 @@ class Medecin(models.Model):
         verbose_name_plural = "Médecins"
 
 class SessionDiscussion(models.Model):
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    medecin = models.ForeignKey(Medecin, on_delete=models.SET_NULL, null=True, blank=True)
+    STATUT_CHOICES = [
+        ('EN_ATTENTE', 'En attente'),
+        ('EN_COURS', 'En cours'),
+        ('TERMINEE', 'Terminée'),
+        ('ANNULEE', 'Annulée'),
+    ]
+
+    patient = models.ForeignKey('Patient', on_delete=models.CASCADE)
+    medecin = models.ForeignKey('Medecin', on_delete=models.SET_NULL, null=True, blank=True)
     date_debut = models.DateTimeField(auto_now_add=True)
     date_fin = models.DateTimeField(null=True, blank=True)
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default='EN_ATTENTE')
 
     def __str__(self):
         medecin = f"avec Dr. {self.medecin}" if self.medecin else "sans médecin"
         return f"Session {self.id} - {self.patient} {medecin} ({self.date_debut})"
+
+    def update_statut(self):
+        """Met à jour automatiquement le statut de la session."""
+        if self.date_fin:
+            self.statut = 'TERMINEE'
+        elif not self.medecin:
+            self.statut = 'EN_ATTENTE'
+        else:
+            self.statut = 'EN_COURS'
+        self.save(update_fields=['statut'])
+
+    def save(self, *args, **kwargs):
+        """Appliquer automatiquement la logique de statut."""
+        if self.date_fin:
+            self.statut = 'TERMINEE'
+        elif not self.medecin:
+            self.statut = 'EN_ATTENTE'
+        else:
+            self.statut = 'EN_COURS'
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Session de discussion"
@@ -291,3 +322,21 @@ class MediaMessage(models.Model):
     class Meta:
         verbose_name = "Fichier média"
         verbose_name_plural = "Fichiers médias"
+
+class TarifConsultation(models.Model):
+    medecin = models.ForeignKey('Medecin', on_delete=models.CASCADE, related_name='tarifs')
+    montant = models.DecimalField(max_digits=10, decimal_places=2)
+    date_debut = models.DateField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-date_debut']
+        verbose_name = "Tarif de consultation"
+        verbose_name_plural = "Tarifs de consultation"
+
+    def __str__(self):
+        return f"{self.montant} $ (depuis {self.date_debut})"
+
+from .telemedicine_models import (
+    ProduitPharmaceutique, ActeMedical, Ordonnance, PrescriptionMedicament,
+    BonExamen, ExamenPrescrit, MessagePrescription, HistoriqueVerification
+)

@@ -1,9 +1,13 @@
 {% extends "medecins/base.html" %}
 {% load static %}
 
-{% block title %}Inscription Médecin{% endblock %}
+{% block title %}Inscription Médecin - Lobiko{% endblock %}
 
 {% block body_class %}auth-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/lobiko-styles.css' %}">
+{% endblock %}
 
 {% block select2_css %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -17,45 +21,518 @@
 {% endblock %}
 
 {% block content %}
-<div class="form-card">
-    <h2 class="form-title">Inscription Médecin</h2>
-    <form method="post" id="inscriptionForm">
-        {% csrf_token %}
-        {% for field in form.visible_fields %}
-            <div class="form-group{% if field.field.required %} required{% endif %}">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                    {% for error in field.errors %}
-                        <span class="error-message">{{ error }}</span>
-                    {% endfor %}
+<div class="lobiko-container">
+    <div class="lobiko-card">
+        <!-- En-tête avec logo -->
+        <div class="lobiko-header">
+            <div class="lobiko-logo">
+                <img src="{% static 'images/lobiko.png' %}" alt="Logo Lobiko">
+            </div>
+            <h1 class="lobiko-title">Inscription Médecin</h1>
+            <p class="lobiko-subtitle">Rejoignez la plateforme Lobiko Health</p>
+        </div>
+
+        <!-- Corps du formulaire wizard -->
+        <div class="lobiko-form-body">
+            <!-- Indicateur de progression -->
+            <div class="wizard-progress">
+                <div class="progress-steps">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Identité</div>
+                    </div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Localisation</div>
+                    </div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Profession</div>
+                    </div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-label">Sécurité</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 25%;"></div>
+                </div>
+            </div>
+
+            <form method="post" id="inscriptionWizardForm">
+                {% csrf_token %}
+                
+                <!-- Étape 1: Informations personnelles -->
+                <div class="wizard-step active" data-step="1" data-session-id="{{ session.id|default:'0' }}">
+                    <h3 class="step-title">Informations personnelles</h3>
+                    
+                    <div class="lobiko-form-row">
+                        <div class="lobiko-form-group">
+                            <label class="lobiko-label lobiko-required" for="{{ form.nom.id_for_label }}">{{ form.nom.label }}</label>
+                            {{ form.nom }}
+                            {% if form.nom.errors %}
+                                <ul class="lobiko-errorlist">
+                                    {% for error in form.nom.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="lobiko-form-group">
+                            <label class="lobiko-label lobiko-required" for="{{ form.postnom.id_for_label }}">{{ form.postnom.label }}</label>
+                            {{ form.postnom }}
+                            {% if form.postnom.errors %}
+                                <ul class="lobiko-errorlist">
+                                    {% for error in form.postnom.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="lobiko-form-row">
+                        <div class="lobiko-form-group">
+                            <label class="lobiko-label lobiko-required" for="{{ form.prenom.id_for_label }}">{{ form.prenom.label }}</label>
+                            {{ form.prenom }}
+                            {% if form.prenom.errors %}
+                                <ul class="lobiko-errorlist">
+                                    {% for error in form.prenom.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="lobiko-form-group">
+                            <label class="lobiko-label lobiko-required" for="{{ form.sexe.id_for_label }}">{{ form.sexe.label }}</label>
+                            {{ form.sexe }}
+                            {% if form.sexe.errors %}
+                                <ul class="lobiko-errorlist">
+                                    {% for error in form.sexe.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="lobiko-form-row">
+                        <div class="lobiko-form-group">
+                            <label class="lobiko-label lobiko-required" for="{{ form.date_naissance.id_for_label }}">{{ form.date_naissance.label }}</label>
+                            {{ form.date_naissance }}
+                            {% if form.date_naissance.errors %}
+                                <ul class="lobiko-errorlist">
+                                    {% for error in form.date_naissance.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="lobiko-form-group">
+                            <label class="lobiko-label" for="{{ form.etat_civil.id_for_label }}">{{ form.etat_civil.label }}</label>
+                            {{ form.etat_civil }}
+                            {% if form.etat_civil.errors %}
+                                <ul class="lobiko-errorlist">
+                                    {% for error in form.etat_civil.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="lobiko-form-group">
+                        <label class="lobiko-label lobiko-required" for="{{ form.telephone.id_for_label }}">{{ form.telephone.label }}</label>
+                        {{ form.telephone }}
+                        <small class="form-help">{{ form.telephone.help_text }}</small>
+                        {% if form.telephone.errors %}
+                            <ul class="lobiko-errorlist">
+                                {% for error in form.telephone.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Étape 2: Localisation -->
+                <div class="wizard-step" data-step="2">
+                    <h3 class="step-title">Localisation</h3>
+                    
+                    <div class="lobiko-form-group">
+                        <label class="lobiko-label lobiko-required" for="{{ form.commune.id_for_label }}">{{ form.commune.label }}</label>
+                        {{ form.commune }}
+                        {% if form.commune.errors %}
+                            <ul class="lobiko-errorlist">
+                                {% for error in form.commune.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="lobiko-form-row">
+                        <div class="lobiko-form-group">
+                            <label class="lobiko-label" for="{{ form.quartier.id_for_label }}">{{ form.quartier.label }}</label>
+                            {{ form.quartier }}
+                            {% if form.quartier.errors %}
+                                <ul class="lobiko-errorlist">
+                                    {% for error in form.quartier.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="lobiko-form-group">
+                            <label class="lobiko-label" for="{{ form.avenue.id_for_label }}">{{ form.avenue.label }}</label>
+                            {{ form.avenue }}
+                            {% if form.avenue.errors %}
+                                <ul class="lobiko-errorlist">
+                                    {% for error in form.avenue.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Étape 3: Informations professionnelles -->
+                <div class="wizard-step" data-step="3">
+                    <h3 class="step-title">Informations professionnelles</h3>
+                    
+                    <div class="lobiko-form-group">
+                        <label class="lobiko-label lobiko-required" for="{{ form.specialite.id_for_label }}">{{ form.specialite.label }}</label>
+                        {{ form.specialite }}
+                        {% if form.specialite.errors %}
+                            <ul class="lobiko-errorlist">
+                                {% for error in form.specialite.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="lobiko-form-group">
+                        <label class="lobiko-label lobiko-required" for="{{ form.cnom.id_for_label }}">{{ form.cnom.label }}</label>
+                        {{ form.cnom }}
+                        <small class="form-help">{{ form.cnom.help_text }}</small>
+                        {% if form.cnom.errors %}
+                            <ul class="lobiko-errorlist">
+                                {% for error in form.cnom.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="lobiko-form-group">
+                        <label class="lobiko-label" for="{{ form.langues.id_for_label }}">{{ form.langues.label }}</label>
+                        {{ form.langues }}
+                        <small class="form-help">{{ form.langues.help_text }}</small>
+                        {% if form.langues.errors %}
+                            <ul class="lobiko-errorlist">
+                                {% for error in form.langues.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Étape 4: Sécurité -->
+                <div class="wizard-step" data-step="4">
+                    <h3 class="step-title">Sécurité du compte</h3>
+                    
+                    <div class="lobiko-form-group">
+                        <label class="lobiko-label lobiko-required" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                        {{ form.username }}
+                        <small class="form-help">{{ form.username.help_text }}</small>
+                        {% if form.username.errors %}
+                            <ul class="lobiko-errorlist">
+                                {% for error in form.username.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <div class="lobiko-form-row">
+                        <div class="lobiko-form-group">
+                            <label class="lobiko-label lobiko-required" for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                            {{ form.password }}
+                            <small class="form-help">{{ form.password.help_text }}</small>
+                            {% if form.password.errors %}
+                                <ul class="lobiko-errorlist">
+                                    {% for error in form.password.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="lobiko-form-group">
+                            <label class="lobiko-label lobiko-required" for="{{ form.confirm_password.id_for_label }}">{{ form.confirm_password.label }}</label>
+                            {{ form.confirm_password }}
+                            {% if form.confirm_password.errors %}
+                                <ul class="lobiko-errorlist">
+                                    {% for error in form.confirm_password.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages d'erreur globaux -->
+                {% if form.non_field_errors %}
+                    <div class="lobiko-errorlist">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </div>
                 {% endif %}
-            </div>
-        {% endfor %}
 
-        {% if form.non_field_errors %}
-            <div class="error-message">
-                {% for error in form.non_field_errors %}
-                    {{ error }}
-                {% endfor %}
-            </div>
-        {% endif %}
+                <!-- Boutons de navigation -->
+                <div class="wizard-navigation">
+                    <button type="button" class="lobiko-btn lobiko-btn-secondary wizard-prev" style="display: none;">
+                        <i class="fas fa-arrow-left"></i> Précédent
+                    </button>
+                    
+                    <button type="button" class="lobiko-btn lobiko-btn-primary wizard-next">
+                        Suivant <i class="fas fa-arrow-right"></i>
+                    </button>
+                    
+                    <button type="submit" class="lobiko-btn lobiko-btn-primary wizard-submit" style="display: none;">
+                        <i class="fas fa-user-plus"></i> S'inscrire
+                    </button>
+                </div>
+            </form>
+        </div>
 
-        <button type="submit" class="btn-primary">
-            S'inscrire
-        </button>
-    </form>
+        <!-- Pied de page -->
+        <div class="lobiko-footer">
+            <p>Déjà inscrit ? <a href="{% url 'login_medecin' %}" class="text-link">Se connecter</a></p>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// Attendre que jQuery soit complètement chargé
 $(document).ready(function() {
-    $('.select2').select2({
-        placeholder: "Choisissez les langues",
-        width: '100%'
+    console.log('jQuery version:', $.fn.jquery);
+    
+    // Vérifier si Select2 est disponible
+    if ($.fn.select2) {
+        console.log('Select2 disponible, initialisation...');
+        // Initialiser Select2 pour les langues
+        $('.select2').select2({
+            placeholder: "Choisissez les langues",
+            width: '100%'
+        });
+    } else {
+        console.error('Select2 non disponible');
+    }
+    
+    // Ajouter les classes Lobiko aux champs générés par Django
+    $('#inscriptionWizardForm input[type="text"], #inscriptionWizardForm input[type="password"], #inscriptionWizardForm input[type="date"]').addClass('lobiko-input');
+    $('#inscriptionWizardForm select').addClass('lobiko-select');
+    $('#inscriptionWizardForm textarea').addClass('lobiko-textarea');
+    
+    // Marquer les champs avec erreurs
+    $('.lobiko-errorlist').each(function() {
+        $(this).prev().addClass('error');
     });
+    
+    // Attendre un peu avant d'initialiser le wizard pour s'assurer que tout est chargé
+    setTimeout(function() {
+        console.log('Tentative d\'initialisation du wizard...');
+        if (typeof initializeWizard === 'function') {
+            initializeWizard();
+        } else {
+            console.error('Fonction initializeWizard non trouvée');
+            // Initialisation manuelle du wizard
+            initializeWizardManually();
+        }
+    }, 100);
 });
+
+// Fonction d'initialisation manuelle du wizard
+function initializeWizardManually() {
+    console.log('Initialisation manuelle du wizard');
+    
+    // Variables globales
+    window.currentStep = 1;
+    window.totalSteps = 4;
+    
+    // Masquer toutes les étapes sauf la première
+    document.querySelectorAll('.wizard-step').forEach((step, index) => {
+        if (index === 0) {
+            step.style.display = 'block';
+            step.classList.add('active');
+        } else {
+            step.style.display = 'none';
+            step.classList.remove('active');
+        }
+    });
+    
+    // Fonction pour passer à l'étape suivante
+    window.nextStep = function() {
+        console.log('nextStep appelé, étape actuelle:', window.currentStep);
+        
+        if (window.currentStep < window.totalSteps) {
+            // Masquer l'étape actuelle
+            const currentStepElement = document.querySelector('.wizard-step[data-step="' + window.currentStep + '"]');
+            if (currentStepElement) {
+                currentStepElement.style.display = 'none';
+                currentStepElement.classList.remove('active');
+            }
+            
+            // Passer à l'étape suivante
+            window.currentStep++;
+            
+            // Afficher la nouvelle étape
+            const nextStepElement = document.querySelector('.wizard-step[data-step="' + window.currentStep + '"]');
+            if (nextStepElement) {
+                nextStepElement.style.display = 'block';
+                nextStepElement.classList.add('active');
+            }
+            
+            // Mettre à jour les indicateurs de progression
+            document.querySelectorAll('.step').forEach((step, index) => {
+                const stepNumber = index + 1;
+                step.classList.remove('active', 'completed');
+                
+                if (stepNumber === window.currentStep) {
+                    step.classList.add('active');
+                } else if (stepNumber < window.currentStep) {
+                    step.classList.add('completed');
+                }
+            });
+            
+            // Mettre à jour la barre de progression
+            const progressFill = document.querySelector('.progress-fill');
+            if (progressFill) {
+                const progressPercentage = (window.currentStep / window.totalSteps) * 100;
+                progressFill.style.width = progressPercentage + '%';
+            }
+            
+            // Gérer l'affichage des boutons
+            const prevBtn = document.querySelector('.wizard-prev');
+            const nextBtn = document.querySelector('.wizard-next');
+            const submitBtn = document.querySelector('.wizard-submit');
+            
+            if (prevBtn) {
+                prevBtn.style.display = window.currentStep === 1 ? 'none' : 'inline-flex';
+            }
+            
+            if (nextBtn && submitBtn) {
+                if (window.currentStep === window.totalSteps) {
+                    nextBtn.style.display = 'none';
+                    submitBtn.style.display = 'inline-flex';
+                } else {
+                    nextBtn.style.display = 'inline-flex';
+                    submitBtn.style.display = 'none';
+                }
+            }
+            
+            console.log('Navigation vers étape', window.currentStep);
+        }
+    };
+    
+    // Fonction pour revenir à l'étape précédente
+    window.prevStep = function() {
+        console.log('prevStep appelé, étape actuelle:', window.currentStep);
+        
+        if (window.currentStep > 1) {
+            // Masquer l'étape actuelle
+            const currentStepElement = document.querySelector('.wizard-step[data-step="' + window.currentStep + '"]');
+            if (currentStepElement) {
+                currentStepElement.style.display = 'none';
+                currentStepElement.classList.remove('active');
+            }
+            
+            // Revenir à l'étape précédente
+            window.currentStep--;
+            
+            // Afficher l'étape précédente
+            const prevStepElement = document.querySelector('.wizard-step[data-step="' + window.currentStep + '"]');
+            if (prevStepElement) {
+                prevStepElement.style.display = 'block';
+                prevStepElement.classList.add('active');
+            }
+            
+            // Mettre à jour les indicateurs de progression
+            document.querySelectorAll('.step').forEach((step, index) => {
+                const stepNumber = index + 1;
+                step.classList.remove('active', 'completed');
+                
+                if (stepNumber === window.currentStep) {
+                    step.classList.add('active');
+                } else if (stepNumber < window.currentStep) {
+                    step.classList.add('completed');
+                }
+            });
+            
+            // Mettre à jour la barre de progression
+            const progressFill = document.querySelector('.progress-fill');
+            if (progressFill) {
+                const progressPercentage = (window.currentStep / window.totalSteps) * 100;
+                progressFill.style.width = progressPercentage + '%';
+            }
+            
+            // Gérer l'affichage des boutons
+            const prevBtn = document.querySelector('.wizard-prev');
+            const nextBtn = document.querySelector('.wizard-next');
+            const submitBtn = document.querySelector('.wizard-submit');
+            
+            if (prevBtn) {
+                prevBtn.style.display = window.currentStep === 1 ? 'none' : 'inline-flex';
+            }
+            
+            if (nextBtn && submitBtn) {
+                if (window.currentStep === window.totalSteps) {
+                    nextBtn.style.display = 'none';
+                    submitBtn.style.display = 'inline-flex';
+                } else {
+                    nextBtn.style.display = 'inline-flex';
+                    submitBtn.style.display = 'none';
+                }
+            }
+            
+            console.log('Navigation vers étape', window.currentStep);
+        }
+    };
+    
+    // Attacher les événements aux boutons
+    const nextBtn = document.querySelector('.wizard-next');
+    const prevBtn = document.querySelector('.wizard-prev');
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Bouton Suivant cliqué');
+            window.nextStep();
+        });
+    }
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Bouton Précédent cliqué');
+            window.prevStep();
+        });
+    }
+    
+    console.log('Wizard initialisé manuellement avec succès');
+}
 </script>
 {% endblock %}
 

@@ -13,11 +13,17 @@ from django.contrib import messages as django_messages
 from botocore.exceptions import ClientError
 from lobikohealth import settings
 from .forms import MedecinInscriptionForm, MedecinLoginForm, MessageForm
-from lobiko.models import Medecin, MediaMessage, Message, SessionDiscussion
+from lobiko.models import Medecin, MediaMessage, Message, SessionDiscussion,TarifConsultation
 import secrets
 from urllib.parse import quote, urlparse
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+
+#added
+from django.contrib.auth.decorators import login_required
+from datetime import datetime
+from django.db.models import Avg, Sum
+from decimal import Decimal
 
 def inscription_medecin(request):
     if request.method == "POST":
@@ -64,13 +70,47 @@ def dashboard_medecin(request):
     # Récupérer les sessions en attente (sans médecin attribué)
     sessions_en_attente = SessionDiscussion.objects.filter(medecin__isnull=True, date_fin__isnull=True).select_related('patient')
 
-    # On peut aussi récupérer les sessions en cours du médecin connecté si tu veux (optionnel)
+    # Récupérer les sessions en cours du médecin connecté si tu veux (optionnel)
     sessions_en_cours = SessionDiscussion.objects.filter(medecin=medecin, date_fin__isnull=True).select_related('patient')
+
+    # Consultations du mois
+    consultations_mois = SessionDiscussion.objects.filter(
+        medecin=medecin,
+        date_debut__month=timezone.now().month,
+        date_debut__year=timezone.now().year,
+    ).count()
+
+    # Récupérer les sessions du mois
+    consult = SessionDiscussion.objects.filter(
+        medecin=medecin,
+        date_debut__month=timezone.now().month,
+        date_debut__year=timezone.now().year,
+        date_fin__isnull=False
+    )
+
+    commission_mois = Decimal("0.00")
+
+    for session in consult:
+        tarif = TarifConsultation.objects.filter(
+            medecin=medecin,
+            date_debut__lte=session.date_debut.date()
+        ).order_by("-date_debut").first()
+
+        if tarif:
+            commission_mois += tarif.montant
+
+        # Activité récente (5 dernières)
+    sessions_recentes = SessionDiscussion.objects.filter(
+        medecin=medecin
+    ).order_by("-date_debut")[:5]
 
     context = {
         'medecin': medecin,
         'sessions_en_attente': sessions_en_attente,
         'sessions_en_cours': sessions_en_cours,
+        "consultations_mois": consultations_mois,
+        "sessions_recentes": sessions_recentes,
+        "commission_mois": commission_mois,
     }
     return render(request, 'medecins/dashboard.html', context)
 

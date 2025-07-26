@@ -1,0 +1,936 @@
+<!-- Interface pour les prescriptions à intégrer dans discussion.html -->
+
+<!-- Modales pour les prescriptions -->
+<div id="prescriptionModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-pills"></i> Créer une Ordonnance</h3>
+            <span class="close" onclick="closePrescriptionModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="prescriptionForm">
+                <!-- Informations générales -->
+                <div class="form-section">
+                    <h4>Informations générales</h4>
+                    <div class="form-group">
+                        <label for="diagnostic">Diagnostic</label>
+                        <textarea id="diagnostic" name="diagnostic" rows="3" placeholder="Diagnostic principal..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="motif_prescription">Motif de la prescription</label>
+                        <textarea id="motif_prescription" name="motif_prescription" rows="2" placeholder="Motif de la prescription..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="instructions_generales">Instructions générales</label>
+                        <textarea id="instructions_generales" name="instructions_generales" rows="3" placeholder="Instructions générales pour le patient..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Médicaments -->
+                <div class="form-section">
+                    <h4>Médicaments prescrits</h4>
+                    <div id="medicaments-container">
+                        <!-- Les médicaments seront ajoutés dynamiquement ici -->
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="ajouterMedicament()">
+                        <i class="fas fa-plus"></i> Ajouter un médicament
+                    </button>
+                </div>
+
+                <!-- Validité -->
+                <div class="form-section">
+                    <h4>Validité</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date_validite">Date de validité</label>
+                            <input type="date" id="date_validite" name="date_validite">
+                        </div>
+                        <div class="form-group">
+                            <label for="renouvelable">
+                                <input type="checkbox" id="renouvelable" name="renouvelable">
+                                Renouvelable
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closePrescriptionModal()">Annuler</button>
+            <button type="button" class="btn btn-primary" onclick="envoyerPrescription()">
+                <i class="fas fa-paper-plane"></i> Envoyer l'ordonnance
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="bonExamenModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-microscope"></i> Créer un Bon d'Examens</h3>
+            <span class="close" onclick="closeBonExamenModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="bonExamenForm">
+                <!-- Informations générales -->
+                <div class="form-section">
+                    <h4>Informations générales</h4>
+                    <div class="form-group">
+                        <label for="motif_examens">Motif des examens</label>
+                        <textarea id="motif_examens" name="motif_examens" rows="3" placeholder="Motif des examens demandés..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="diagnostic_provisoire">Diagnostic provisoire</label>
+                        <textarea id="diagnostic_provisoire" name="diagnostic_provisoire" rows="2" placeholder="Diagnostic provisoire..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="renseignements_cliniques">Renseignements cliniques</label>
+                        <textarea id="renseignements_cliniques" name="renseignements_cliniques" rows="3" placeholder="Renseignements cliniques pertinents..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Priorité et délais -->
+                <div class="form-section">
+                    <h4>Priorité et délais</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="priorite">Priorité</label>
+                            <select id="priorite" name="priorite">
+                                <option value="NORMAL">Normal</option>
+                                <option value="URGENT">Urgent</option>
+                                <option value="TRES_URGENT">Très urgent</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="delai_realisation">Délai de réalisation</label>
+                            <input type="text" id="delai_realisation" name="delai_realisation" placeholder="Ex: Dans les 48h">
+                        </div>
+                        <div class="form-group">
+                            <label for="validite_jours">Validité (jours)</label>
+                            <input type="number" id="validite_jours" name="validite_jours" value="60" min="1" max="365">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Examens -->
+                <div class="form-section">
+                    <h4>Examens prescrits</h4>
+                    <div id="examens-container">
+                        <!-- Les examens seront ajoutés dynamiquement ici -->
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="ajouterExamen()">
+                        <i class="fas fa-plus"></i> Ajouter un examen
+                    </button>
+                </div>
+
+                <!-- Instructions de préparation -->
+                <div class="form-section">
+                    <h4>Instructions de préparation</h4>
+                    <div class="form-group">
+                        <label for="instructions_preparation">Instructions spéciales</label>
+                        <textarea id="instructions_preparation" name="instructions_preparation" rows="4" placeholder="Instructions spéciales de préparation pour le patient..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeBonExamenModal()">Annuler</button>
+            <button type="button" class="btn btn-primary" onclick="envoyerBonExamen()">
+                <i class="fas fa-paper-plane"></i> Envoyer le bon d'examens
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Boutons d'action à ajouter dans la zone input-area -->
+<div class="prescription-actions" style="margin-bottom: 1rem;">
+    <button type="button" class="action-btn action-btn-prescription" onclick="ouvrirPrescriptionModal()">
+        <i class="fas fa-pills"></i> Prescrire des médicaments
+    </button>
+    <button type="button" class="action-btn action-btn-examen" onclick="ouvrirBonExamenModal()">
+        <i class="fas fa-microscope"></i> Prescrire des examens
+    </button>
+</div>
+
+<!-- Styles CSS -->
+<style>
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #2E8B57 0%, #4682B4 100%);
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.close {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: white;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
+
+.close:hover {
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.form-section h4 {
+    color: #2E8B57;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4682B4;
+    box-shadow: 0 0 0 2px rgba(70, 130, 180, 0.2);
+}
+
+.medicament-item,
+.examen-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.medicament-item h5,
+.examen-item h5 {
+    margin: 0 0 1rem 0;
+    color: #4682B4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.remove-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.remove-btn:hover {
+    background: #c82333;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: #4682B4;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #3a6d96;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.action-btn-prescription {
+    background: linear-gradient(135deg, #2E8B57, #20B2AA);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: 1rem;
+}
+
+.action-btn-prescription:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
+}
+
+.action-btn-examen {
+    background: linear-gradient(135deg, #4682B4, #20B2AA);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btn-examen:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(70, 130, 180, 0.3);
+}
+
+.prescription-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(46, 139, 87, 0.05);
+    border-radius: 6px;
+    border: 1px solid rgba(46, 139, 87, 0.1);
+}
+
+/* Messages de prescription dans le chat */
+.prescription-message {
+    background: linear-gradient(135deg, rgba(46, 139, 87, 0.1), rgba(70, 130, 180, 0.1));
+    border-left: 4px solid #2E8B57;
+    padding: 1rem;
+    border-radius: 6px;
+    margin: 0.5rem 0;
+}
+
+.prescription-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #2E8B57;
+}
+
+.prescription-details {
+    font-size: 0.9rem;
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+.prescription-actions-msg {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.prescription-btn {
+    background: #4682B4;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.prescription-btn:hover {
+    background: #3a6d96;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .prescription-actions {
+        flex-direction: column;
+    }
+    
+    .action-btn-prescription,
+    .action-btn-examen {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<!-- JavaScript pour les prescriptions -->
+<script>
+let medicamentCounter = 0;
+let examenCounter = 0;
+let produitsPharmaceutiques = [];
+let actesMedicaux = [];
+
+// Charger les données de référence
+async function chargerDonneesReference() {
+    try {
+        // Charger les produits pharmaceutiques
+        const produitsResponse = await fetch('/api/produits-pharmaceutiques/');
+        if (produitsResponse.ok) {
+            produitsPharmaceutiques = await produitsResponse.json();
+        }
+        
+        // Charger les actes médicaux
+        const actesResponse = await fetch('/api/actes-medicaux/');
+        if (actesResponse.ok) {
+            actesMedicaux = await actesResponse.json();
+        }
+    } catch (error) {
+        console.error('Erreur chargement données de référence:', error);
+    }
+}
+
+// Initialiser au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    chargerDonneesReference();
+});
+
+function ouvrirPrescriptionModal() {
+    document.getElementById('prescriptionModal').style.display = 'flex';
+    // Définir la date de validité par défaut (30 jours)
+    const dateValidite = new Date();
+    dateValidite.setDate(dateValidite.getDate() + 30);
+    document.getElementById('date_validite').value = dateValidite.toISOString().split('T')[0];
+}
+
+function closePrescriptionModal() {
+    document.getElementById('prescriptionModal').style.display = 'none';
+    document.getElementById('prescriptionForm').reset();
+    document.getElementById('medicaments-container').innerHTML = '';
+    medicamentCounter = 0;
+}
+
+function ouvrirBonExamenModal() {
+    document.getElementById('bonExamenModal').style.display = 'flex';
+}
+
+function closeBonExamenModal() {
+    document.getElementById('bonExamenModal').style.display = 'none';
+    document.getElementById('bonExamenForm').reset();
+    document.getElementById('examens-container').innerHTML = '';
+    examenCounter = 0;
+}
+
+function ajouterMedicament() {
+    medicamentCounter++;
+    const container = document.getElementById('medicaments-container');
+    
+    const medicamentDiv = document.createElement('div');
+    medicamentDiv.className = 'medicament-item';
+    medicamentDiv.id = `medicament-${medicamentCounter}`;
+    
+    medicamentDiv.innerHTML = `
+        <h5>
+            Médicament ${medicamentCounter}
+            <button type="button" class="remove-btn" onclick="supprimerMedicament(${medicamentCounter})">
+                <i class="fas fa-times"></i>
+            </button>
+        </h5>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Produit pharmaceutique</label>
+                <select name="produit_id" required onchange="chargerInfosProduit(this, ${medicamentCounter})">
+                    <option value="">Sélectionner un produit...</option>
+                    ${produitsPharmaceutiques.map(p => 
+                        `<option value="${p.id}">${p.nom_commercial} ${p.dosage} (${p.forme})</option>`
+                    ).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Quantité prescrite</label>
+                <input type="text" name="quantite" placeholder="Ex: 1 boîte, 30 comprimés">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Posologie</label>
+                <textarea name="posologie" rows="2" placeholder="Ex: 1 comprimé matin et soir" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Durée du traitement</label>
+                <input type="text" name="duree" placeholder="Ex: 7 jours, 2 semaines" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Instructions spécifiques</label>
+            <textarea name="instructions" rows="2" placeholder="Instructions particulières pour ce médicament..."></textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="avant_repas"> Avant les repas
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="avec_repas"> Avec les repas
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="apres_repas"> Après les repas
+                </label>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(medicamentDiv);
+}
+
+function supprimerMedicament(id) {
+    const element = document.getElementById(`medicament-${id}`);
+    if (element) {
+        element.remove();
+    }
+}
+
+function chargerInfosProduit(select, medicamentId) {
+    const produitId = select.value;
+    if (!produitId) return;
+    
+    const produit = produitsPharmaceutiques.find(p => p.id === produitId);
+    if (produit) {
+        const container = document.getElementById(`medicament-${medicamentId}`);
+        const posologieTextarea = container.querySelector('textarea[name="posologie"]');
+        const dureeInput = container.querySelector('input[name="duree"]');
+        
+        // Pré-remplir avec les informations du produit
+        if (produit.posologie_adulte && !posologieTextarea.value) {
+            posologieTextarea.value = produit.posologie_adulte;
+        }
+        if (produit.duree_traitement_standard && !dureeInput.value) {
+            dureeInput.value = produit.duree_traitement_standard;
+        }
+    }
+}
+
+function ajouterExamen() {
+    examenCounter++;
+    const container = document.getElementById('examens-container');
+    
+    const examenDiv = document.createElement('div');
+    examenDiv.className = 'examen-item';
+    examenDiv.id = `examen-${examenCounter}`;
+    
+    examenDiv.innerHTML = `
+        <h5>
+            Examen ${examenCounter}
+            <button type="button" class="remove-btn" onclick="supprimerExamen(${examenCounter})">
+                <i class="fas fa-times"></i>
+            </button>
+        </h5>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Acte médical</label>
+                <select name="acte_id" required onchange="chargerInfosActe(this, ${examenCounter})">
+                    <option value="">Sélectionner un examen...</option>
+                    ${actesMedicaux.map(a => 
+                        `<option value="${a.id}">${a.nom} (${a.code}) - ${a.categorie}</option>`
+                    ).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Localisation</label>
+                <input type="text" name="localisation" placeholder="Ex: Genou droit, Abdomen complet">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Instructions spécifiques</label>
+                <textarea name="instructions" rows="2" placeholder="Instructions particulières pour cet examen..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Préparation spécifique</label>
+                <textarea name="preparation" rows="2" placeholder="Préparation spéciale requise..."></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="urgent"> Examen urgent
+            </label>
+        </div>
+    `;
+    
+    container.appendChild(examenDiv);
+}
+
+function supprimerExamen(id) {
+    const element = document.getElementById(`examen-${id}`);
+    if (element) {
+        element.remove();
+    }
+}
+
+function chargerInfosActe(select, examenId) {
+    const acteId = select.value;
+    if (!acteId) return;
+    
+    const acte = actesMedicaux.find(a => a.id === acteId);
+    if (acte) {
+        const container = document.getElementById(`examen-${examenId}`);
+        const preparationTextarea = container.querySelector('textarea[name="preparation"]');
+        
+        // Pré-remplir avec les informations de l'acte
+        if (acte.preparation_requise && !preparationTextarea.value) {
+            preparationTextarea.value = acte.preparation_requise;
+        }
+    }
+}
+
+async function envoyerPrescription() {
+    const form = document.getElementById('prescriptionForm');
+    const formData = new FormData(form);
+    
+    // Collecter les données des médicaments
+    const medicaments = [];
+    const medicamentItems = document.querySelectorAll('.medicament-item');
+    
+    medicamentItems.forEach((item, index) => {
+        const produitSelect = item.querySelector('select[name="produit_id"]');
+        const quantiteInput = item.querySelector('input[name="quantite"]');
+        const posologieTextarea = item.querySelector('textarea[name="posologie"]');
+        const dureeInput = item.querySelector('input[name="duree"]');
+        const instructionsTextarea = item.querySelector('textarea[name="instructions"]');
+        const avantRepasCheckbox = item.querySelector('input[name="avant_repas"]');
+        const avecRepasCheckbox = item.querySelector('input[name="avec_repas"]');
+        const apresRepasCheckbox = item.querySelector('input[name="apres_repas"]');
+        
+        if (produitSelect.value && posologieTextarea.value && dureeInput.value) {
+            medicaments.push({
+                produit_id: produitSelect.value,
+                quantite: quantiteInput.value,
+                posologie: posologieTextarea.value,
+                duree: dureeInput.value,
+                instructions: instructionsTextarea.value,
+                avant_repas: avantRepasCheckbox.checked,
+                avec_repas: avecRepasCheckbox.checked,
+                apres_repas: apresRepasCheckbox.checked,
+                substitution_autorisee: true
+            });
+        }
+    });
+    
+    if (medicaments.length === 0) {
+        alert('Veuillez ajouter au moins un médicament.');
+        return;
+    }
+    
+    const prescriptionData = {
+        session_id: sessionId,
+        medecin_id: {{ request.user.medecin.id }},
+        prescription_data: {
+            diagnostic: formData.get('diagnostic'),
+            motif: formData.get('motif_prescription'),
+            instructions_generales: formData.get('instructions_generales'),
+            date_validite: formData.get('date_validite'),
+            medicaments: medicaments
+        }
+    };
+    
+    try {
+        const response = await fetch('/api/creer-prescription/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(prescriptionData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            closePrescriptionModal();
+            // Afficher un message de succès
+            alert(`Ordonnance ${result.numero} envoyée avec succès !`);
+        } else {
+            alert('Erreur lors de l\'envoi de l\'ordonnance: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'envoi de l\'ordonnance.');
+    }
+}
+
+async function envoyerBonExamen() {
+    const form = document.getElementById('bonExamenForm');
+    const formData = new FormData(form);
+    
+    // Collecter les données des examens
+    const examens = [];
+    const examenItems = document.querySelectorAll('.examen-item');
+    
+    examenItems.forEach((item, index) => {
+        const acteSelect = item.querySelector('select[name="acte_id"]');
+        const localisationInput = item.querySelector('input[name="localisation"]');
+        const instructionsTextarea = item.querySelector('textarea[name="instructions"]');
+        const preparationTextarea = item.querySelector('textarea[name="preparation"]');
+        const urgentCheckbox = item.querySelector('input[name="urgent"]');
+        
+        if (acteSelect.value) {
+            examens.push({
+                acte_id: acteSelect.value,
+                localisation: localisationInput.value,
+                instructions: instructionsTextarea.value,
+                preparation: preparationTextarea.value,
+                urgent: urgentCheckbox.checked
+            });
+        }
+    });
+    
+    if (examens.length === 0) {
+        alert('Veuillez ajouter au moins un examen.');
+        return;
+    }
+    
+    const bonData = {
+        session_id: sessionId,
+        medecin_id: {{ request.user.medecin.id }},
+        bon_data: {
+            motif: formData.get('motif_examens'),
+            diagnostic_provisoire: formData.get('diagnostic_provisoire'),
+            renseignements_cliniques: formData.get('renseignements_cliniques'),
+            instructions_preparation: formData.get('instructions_preparation'),
+            priorite: formData.get('priorite'),
+            delai_realisation: formData.get('delai_realisation'),
+            validite_jours: parseInt(formData.get('validite_jours')),
+            examens: examens
+        }
+    };
+    
+    try {
+        const response = await fetch('/api/creer-bon-examen/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(bonData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            closeBonExamenModal();
+            // Afficher un message de succès
+            alert(`Bon d'examens ${result.numero} envoyé avec succès !`);
+        } else {
+            alert('Erreur lors de l\'envoi du bon d\'examens: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'envoi du bon d\'examens.');
+    }
+}
+
+// Gestion des messages de prescription dans le WebSocket
+function ajouterMessagePrescription(data) {
+    const container = document.getElementById('messagesContainer');
+    
+    const messageGroup = document.createElement('div');
+    messageGroup.className = 'message-group';
+    
+    const timeString = new Date(data.date).toLocaleTimeString('fr-FR', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    let contenu = '';
+    let actions = '';
+    
+    if (data.type === 'prescription_medicament') {
+        contenu = `
+            <div class="prescription-message">
+                <div class="prescription-header">
+                    <i class="fas fa-pills"></i>
+                    Ordonnance médicale envoyée
+                </div>
+                <div class="prescription-details">
+                    <strong>N° ${data.numero}</strong><br>
+                    Médicaments prescrits: ${data.medicaments_count}<br>
+                    Médecin: ${data.medecin}
+                </div>
+                <div class="prescription-actions-msg">
+                    <button class="prescription-btn" onclick="window.open('${data.pdf_url}', '_blank')">
+                        <i class="fas fa-file-pdf"></i> Voir le PDF
+                    </button>
+                    <button class="prescription-btn" onclick="telechargerPrescription('${data.prescription_id}')">
+                        <i class="fas fa-download"></i> Télécharger
+                    </button>
+                </div>
+            </div>
+        `;
+    } else if (data.type === 'bon_examen') {
+        const prioriteEmoji = data.priorite.includes('Urgent') ? '⚠️' : '📋';
+        contenu = `
+            <div class="prescription-message">
+                <div class="prescription-header">
+                    <i class="fas fa-microscope"></i>
+                    ${prioriteEmoji} Bon d'examens envoyé
+                </div>
+                <div class="prescription-details">
+                    <strong>N° ${data.numero}</strong><br>
+                    Examens prescrits: ${data.examens_count}<br>
+                    Priorité: ${data.priorite}<br>
+                    Médecin: ${data.medecin}
+                </div>
+                <div class="prescription-actions-msg">
+                    <button class="prescription-btn" onclick="window.open('${data.pdf_url}', '_blank')">
+                        <i class="fas fa-file-pdf"></i> Voir le PDF
+                    </button>
+                    <button class="prescription-btn" onclick="telechargerBonExamen('${data.bon_examen_id}')">
+                        <i class="fas fa-download"></i> Télécharger
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    messageGroup.innerHTML = `
+        <div class="message-bubble medecin">
+            <div class="message-content medecin">
+                ${contenu}
+            </div>
+            <div class="message-time">
+                ${timeString}
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(messageGroup);
+    scrollToBottom();
+}
+
+function telechargerPrescription(prescriptionId) {
+    window.open(`/api/prescription/${prescriptionId}/telecharger/`, '_blank');
+}
+
+function telechargerBonExamen(bonExamenId) {
+    window.open(`/api/bon-examen/${bonExamenId}/telecharger/`, '_blank');
+}
+
+// Fermer les modales en cliquant à l'extérieur
+window.onclick = function(event) {
+    const prescriptionModal = document.getElementById('prescriptionModal');
+    const bonExamenModal = document.getElementById('bonExamenModal');
+    
+    if (event.target === prescriptionModal) {
+        closePrescriptionModal();
+    }
+    if (event.target === bonExamenModal) {
+        closeBonExamenModal();
+    }
+}
+</script>
+
