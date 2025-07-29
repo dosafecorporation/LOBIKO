@@ -179,9 +179,6 @@ AWS_S3_OBJECT_PARAMETERS = {
     'ContentDisposition': 'attachment', # C'est la ligne clé !
 }
 
-ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN', '')
-PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID', '')
-
 # Configuration des médias (QR codes, documents temporaires)
 if not hasattr(locals(), 'MEDIA_ROOT'):
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
