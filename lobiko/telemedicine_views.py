@@ -1192,48 +1192,41 @@ def upload_pdf_to_s3(pdf_result, filename):
         print(f"Erreur upload S3: {e}")
         return None
 
-def upload_local_file_to_s3(file_path):
+def upload_local_file_to_s3(url_document):
     """
-    Upload un fichier local vers S3
+    Version corrigée qui gère correctement les chemins Django
     Args:
-        file_path: Chemin absolu ou relatif du fichier (ex: "/media/prescriptions/ordonnances/ORD-XXXX.pdf")
+        url_document: Chemin relatif comme "/media/prescriptions/ordonnances/ORD-XXXX.pdf"
     Returns:
-        dict: {'url': 'nouvelle_url_s3', 's3_key': 'clé_s3'} ou None en cas d'erreur
+        dict: {'url': 'nouvelle_url_s3', 's3_key': 'clé_s3'} ou None
     """
     try:
-        # 1. Vérifier que le fichier existe
-        if not os.path.exists(file_path):
-            logger.error(f"Fichier introuvable: {file_path}")
+        # 1. Nettoyer le chemin et construire le chemin absolu
+        relative_path = url_document.lstrip('/media/')  # Enlève le préfixe /media/
+        absolute_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+        
+        logger.info(f"Tentative d'upload - Chemin relatif: {url_document}")
+        logger.info(f"Chemin absolu construit: {absolute_path}")
+
+        # 2. Vérifier l'existence du fichier
+        if not os.path.exists(absolute_path):
+            logger.error(f"Fichier introuvable. Vérifiez: {absolute_path}")
+            logger.error(f"MEDIA_ROOT: {settings.MEDIA_ROOT}")
             return None
 
-        # 2. Lire le fichier
-        with open(file_path, 'rb') as f:
+        # 3. Lire le fichier
+        with open(absolute_path, 'rb') as f:
             file_data = f.read()
 
-        # 3. Extraire le nom du fichier
-        file_name = os.path.basename(file_path)
-        mime_type, _ = mimetypes.guess_type(file_name)
+        # 4. Préparer l'upload S3
+        file_name = os.path.basename(absolute_path)
+        mime_type = mimetypes.guess_type(file_name)[0] or 'application/octet-stream'
+        
+        logger.debug(f"Fichier trouvé - Taille: {len(file_data)} octets")
 
-        logger.info(f"Tentative d'upload vers S3 - Fichier local: {file_path}")
-        logger.debug(f"Détails - Taille: {len(file_data)} octets, Type: {mime_type}")
+        # 5. Upload vers S3
+        return upload_to_s3(file_data, file_name, mime_type)
 
-        # 4. Upload vers S3
-        result = upload_to_s3(
-            file_data=file_data,
-            file_name=file_name,
-            mime_type=mime_type or 'application/octet-stream'
-        )
-
-        if result:
-            logger.info(f"Upload S3 réussi - Clé: {result['s3_key']}")
-            return result
-        else:
-            logger.error("Échec de l'upload S3")
-            return None
-
-    except IOError as e:
-        logger.error(f"Erreur de lecture du fichier: {str(e)}")
-        return None
     except Exception as e:
-        logger.error(f"Erreur inattendue: {str(e)}", exc_info=True)
+        logger.error(f"Erreur lors de l'upload: {str(e)}", exc_info=True)
         return None
