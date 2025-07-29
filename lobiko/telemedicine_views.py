@@ -1,4 +1,5 @@
 import json
+import mimetypes
 import boto3
 import requests
 import logging
@@ -12,6 +13,8 @@ from django.conf import settings
 from django.utils import timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+
+from bot.views import upload_to_s3
 
 from .models import Medecin, Patient, SessionDiscussion, Message
 from .telemedicine_models import (
@@ -78,7 +81,6 @@ class WhatsAppService:
     def envoyer_document(self, numero_patient, url_document, nom_fichier, caption=""):
         """Envoie un document PDF via WhatsApp avec journalisation complète"""
         try:
-            logger.info(f"Début d'envoi de document - Numéro: {numero_patient}, Fichier: {nom_fichier}")
             
             # 1. Nettoyage du numéro
             numero_clean = ''.join(filter(str.isdigit, numero_patient))
@@ -88,6 +90,10 @@ class WhatsAppService:
             if not numero_clean.startswith('243'):
                 numero_clean = '243' + numero_clean
                 logger.debug(f"Indicatif ajouté - Numéro final: {numero_clean}")
+
+            #Etape intermédiaire pour envoyer le pdf sur as3 et avoir un lien en ligne
+            # Upload vers S3
+            result = upload_existing_document_to_s3(url_document)
             
             # 3. Préparation requête
             headers = {
@@ -100,7 +106,7 @@ class WhatsAppService:
                 "to": numero_clean,
                 "type": "document",
                 "document": {
-                    "link": url_document,
+                    "link": result['url'],
                     "caption": caption,
                     "filename": nom_fichier
                 }
@@ -1182,6 +1188,52 @@ def upload_pdf_to_s3(pdf_result, filename):
     
     except Exception as e:
         print(f"Erreur upload S3: {e}")
+        return None
+
+def upload_existing_document_to_s3(url_document):
+    """
+    Télécharge un document existant depuis son URL et l'upload sur S3
+    Args:
+        url_document: Chemin relatif comme "/media/prescriptions/ordonnances/ORD-XXXX.pdf"
+    Returns:
+        dict: {'url': 'nouvelle_url_s3', 's3_key': 'clé_s3'} ou None en cas d'erreur
+    """
+    # 1. Construire l'URL absolue (si nécessaire)
+    base_url = getattr(settings, 'MEDIA_URL', 'http://votre-domaine.com/media/')
+    absolute_url = f"{base_url.rstrip('/')}{url_document}"
+    
+    logger.info(f"Tentative d'upload vers S3 - Document source: {absolute_url}")
+
+    try:
+        # 2. Télécharger le fichier
+        response = requests.get(absolute_url)
+        response.raise_for_status()
+        
+        # 3. Extraire le nom du fichier
+        file_name = url_document.split('/')[-1]
+        mime_type, _ = mimetypes.guess_type(file_name)
+        
+        logger.debug(f"Fichier téléchargé - Taille: {len(response.content)} octets, Type: {mime_type}")
+
+        # 4. Upload vers S3
+        result = upload_to_s3(
+            file_data=response.content,
+            file_name=file_name,
+            mime_type=mime_type or 'application/octet-stream'
+        )
+        
+        if result:
+            logger.info(f"Upload S3 réussi - Nouvelle URL: {result['url']}")
+            return result
+        else:
+            logger.error("Échec de l'upload S3 (aucune exception levée mais retour None)")
+            return None
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Erreur téléchargement document - {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"Erreur inattendue lors de l'upload - {str(e)}", exc_info=True)
         return None
 
 
