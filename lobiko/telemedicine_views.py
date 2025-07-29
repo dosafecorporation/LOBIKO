@@ -1,5 +1,6 @@
 import json
 import mimetypes
+import os
 import boto3
 import requests
 import logging
@@ -93,7 +94,8 @@ class WhatsAppService:
 
             #Etape intermédiaire pour envoyer le pdf sur as3 et avoir un lien en ligne
             # Upload vers S3
-            result = upload_existing_document_to_s3(url_document)
+            
+            result = upload_local_file_to_s3(url_document)
             
             # 3. Préparation requête
             headers = {
@@ -1190,59 +1192,48 @@ def upload_pdf_to_s3(pdf_result, filename):
         print(f"Erreur upload S3: {e}")
         return None
 
-def upload_existing_document_to_s3(url_document):
+def upload_local_file_to_s3(file_path):
     """
-    Télécharge un document existant depuis son URL et l'upload sur S3
+    Upload un fichier local vers S3
     Args:
-        url_document: Chemin relatif comme "/media/prescriptions/ordonnances/ORD-XXXX.pdf"
+        file_path: Chemin absolu ou relatif du fichier (ex: "/media/prescriptions/ordonnances/ORD-XXXX.pdf")
     Returns:
         dict: {'url': 'nouvelle_url_s3', 's3_key': 'clé_s3'} ou None en cas d'erreur
     """
-    # 1. Construire l'URL absolue (si nécessaire)
-    base_url = getattr(settings, 'MEDIA_URL', 'http://votre-domaine.com/media/')
-    absolute_url = f"{base_url.rstrip('/')}{url_document}"
-    
-    logger.info(f"Tentative d'upload vers S3 - Document source: {absolute_url}")
-
     try:
-        # 2. Télécharger le fichier
-        response = requests.get(absolute_url)
-        response.raise_for_status()
-        
+        # 1. Vérifier que le fichier existe
+        if not os.path.exists(file_path):
+            logger.error(f"Fichier introuvable: {file_path}")
+            return None
+
+        # 2. Lire le fichier
+        with open(file_path, 'rb') as f:
+            file_data = f.read()
+
         # 3. Extraire le nom du fichier
-        file_name = url_document.split('/')[-1]
+        file_name = os.path.basename(file_path)
         mime_type, _ = mimetypes.guess_type(file_name)
-        
-        logger.debug(f"Fichier téléchargé - Taille: {len(response.content)} octets, Type: {mime_type}")
+
+        logger.info(f"Tentative d'upload vers S3 - Fichier local: {file_path}")
+        logger.debug(f"Détails - Taille: {len(file_data)} octets, Type: {mime_type}")
 
         # 4. Upload vers S3
         result = upload_to_s3(
-            file_data=response.content,
+            file_data=file_data,
             file_name=file_name,
             mime_type=mime_type or 'application/octet-stream'
         )
-        
+
         if result:
-            logger.info(f"Upload S3 réussi - Nouvelle URL: {result['url']}")
+            logger.info(f"Upload S3 réussi - Clé: {result['s3_key']}")
             return result
         else:
-            logger.error("Échec de l'upload S3 (aucune exception levée mais retour None)")
+            logger.error("Échec de l'upload S3")
             return None
 
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Erreur téléchargement document - {str(e)}")
+    except IOError as e:
+        logger.error(f"Erreur de lecture du fichier: {str(e)}")
         return None
     except Exception as e:
-        logger.error(f"Erreur inattendue lors de l'upload - {str(e)}", exc_info=True)
+        logger.error(f"Erreur inattendue: {str(e)}", exc_info=True)
         return None
-
-
-# Vues pour l'interface d'administration des prescriptions
-def liste_prescriptions(request):
-    """Vue pour lister les prescriptions d'un médecin"""
-    pass
-
-
-def statistiques_prescriptions(request):
-    """Vue pour afficher les statistiques de prescriptions"""
-    pass
