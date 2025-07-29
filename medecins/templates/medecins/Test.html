@@ -1,0 +1,370 @@
+{% extends "medecins/base.html" %}
+{% load static %}
+
+{% block title %}Inscription Médecin{% endblock %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block select2_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block external_scripts %}
+<!-- jQuery requis par Select2 -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- JS Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <!-- Progress Bar -->
+    <div class="wizard-progress">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-steps">
+            <div class="step active" data-step="1">
+                <div class="step-circle">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span class="step-label">Informations personnelles</span>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-circle">
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+                <span class="step-label">Informations professionnelles</span>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+                <span class="step-label">Finalisation</span>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="form-title" id="stepTitle">Informations personnelles</h2>
+    
+    <form method="post" id="inscriptionForm">
+        {% csrf_token %}
+        
+        <!-- Étape 1: Informations personnelles -->
+        <div class="wizard-step active" id="step1">
+            <div class="step-description">
+                <p>Commençons par vos informations de base</p>
+            </div>
+            
+            {% for field in form.visible_fields %}
+                {% if field.name in "prenom,nom,email,telephone,date_naissance,password1,password2" %}
+                    <div class="form-group{% if field.field.required %} required{% endif %} wizard-field" data-field="{{ field.name }}">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        <div class="input-wrapper">
+                            {% if field.name == "prenom" or field.name == "nom" %}
+                                <i class="input-icon fas fa-user"></i>
+                            {% elif field.name == "email" %}
+                                <i class="input-icon fas fa-envelope"></i>
+                            {% elif field.name == "telephone" %}
+                                <i class="input-icon fas fa-phone"></i>
+                            {% elif field.name == "date_naissance" %}
+                                <i class="input-icon fas fa-calendar"></i>
+                            {% elif field.name == "password1" or field.name == "password2" %}
+                                <i class="input-icon fas fa-lock"></i>
+                            {% endif %}
+                            {{ field }}
+                            {% if field.name == "password1" or field.name == "password2" %}
+                                <button type="button" class="password-toggle" onclick="togglePassword('{{ field.id_for_label }}')">
+                                    <i class="fas fa-eye" id="toggleIcon{{ field.name|slice:'-1:' }}"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                        {% if field.errors %}
+                            {% for error in field.errors %}
+                                <span class="error-message">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Étape 2: Informations professionnelles -->
+        <div class="wizard-step" id="step2">
+            <div class="step-description">
+                <p>Parlez-nous de votre pratique médicale</p>
+            </div>
+
+            {% for field in form.visible_fields %}
+                {% if field.name in "specialite,numero_ordre,annees_experience,langues,adresse_cabinet,tarif_consultation" %}
+                    <div class="form-group{% if field.field.required %} required{% endif %} wizard-field" data-field="{{ field.name }}">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        <div class="input-wrapper">
+                            {% if field.name == "specialite" %}
+                                <i class="input-icon fas fa-stethoscope"></i>
+                            {% elif field.name == "numero_ordre" %}
+                                <i class="input-icon fas fa-id-card"></i>
+                            {% elif field.name == "annees_experience" %}
+                                <i class="input-icon fas fa-calendar-alt"></i>
+                            {% elif field.name == "langues" %}
+                                <i class="input-icon fas fa-globe"></i>
+                            {% elif field.name == "adresse_cabinet" %}
+                                <i class="input-icon fas fa-map-marker-alt"></i>
+                            {% elif field.name == "tarif_consultation" %}
+                                <i class="input-icon fas fa-money-bill"></i>
+                            {% endif %}
+                            {{ field }}
+                        </div>
+                        {% if field.errors %}
+                            {% for error in field.errors %}
+                                <span class="error-message">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Étape 3: Finalisation -->
+        <div class="wizard-step" id="step3">
+            <div class="step-description">
+                <p>Dernière étape avant de rejoindre Lobiko Health</p>
+            </div>
+
+            {% for field in form.visible_fields %}
+                {% if field.name in "bio,disponibilites" %}
+                    <div class="form-group{% if field.field.required %} required{% endif %} wizard-field" data-field="{{ field.name }}">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        <div class="input-wrapper">
+                            {% if field.name == "bio" %}
+                                <i class="input-icon fas fa-user-md"></i>
+                            {% elif field.name == "disponibilites" %}
+                                <i class="input-icon fas fa-clock"></i>
+                            {% endif %}
+                            {{ field }}
+                        </div>
+                        {% if field.name == "bio" %}
+                            <small class="form-help">Décrivez brièvement votre parcours et votre approche médicale</small>
+                        {% elif field.name == "disponibilites" %}
+                            <small class="form-help">Indiquez vos créneaux de disponibilité pour les consultations</small>
+                        {% endif %}
+                        {% if field.errors %}
+                            {% for error in field.errors %}
+                                <span class="error-message">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Résumé des informations -->
+            <div class="registration-summary">
+                <h4><i class="fas fa-clipboard-list"></i> Résumé de votre inscription</h4>
+                <div class="summary-content">
+                    <div class="summary-section">
+                        <h5>Informations personnelles</h5>
+                        <p><strong>Nom:</strong> <span id="summaryNom">-</span></p>
+                        <p><strong>Email:</strong> <span id="summaryEmail">-</span></p>
+                        <p><strong>Téléphone:</strong> <span id="summaryTelephone">-</span></p>
+                    </div>
+                    <div class="summary-section">
+                        <h5>Informations professionnelles</h5>
+                        <p><strong>Spécialité:</strong> <span id="summarySpecialite">-</span></p>
+                        <p><strong>N° d'ordre:</strong> <span id="summaryNumeroOrdre">-</span></p>
+                        <p><strong>Expérience:</strong> <span id="summaryExperience">-</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conditions d'utilisation -->
+            <div class="terms-section">
+                <div class="form-group">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="acceptTerms" name="accept_terms" required>
+                        <span class="checkmark"></span>
+                        J'accepte les <a href="#" target="_blank">conditions d'utilisation</a> et la <a href="#" target="_blank">politique de confidentialité</a>
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="acceptNewsletter" name="accept_newsletter">
+                        <span class="checkmark"></span>
+                        Je souhaite recevoir les actualités et offres de Lobiko Health
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages d'erreur globaux -->
+        {% if form.non_field_errors %}
+            <div class="error-message">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Boutons de navigation -->
+        <div class="wizard-navigation">
+            <button type="button" class="btn btn-outline" id="prevBtn" onclick="changeStep(-1)" style="display: none;">
+                <i class="fas fa-arrow-left"></i> Précédent
+            </button>
+            
+            <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">
+                Suivant <i class="fas fa-arrow-right"></i>
+            </button>
+            
+            <button type="submit" class="btn btn-primary" id="submitBtn" style="display: none;">
+                <i class="fas fa-user-plus"></i> Finaliser l'inscription
+            </button>
+        </div>
+    </form>
+
+    <!-- Aide contextuelle -->
+    <div class="wizard-help">
+        <div class="help-content" id="helpContent">
+            <h4><i class="fas fa-info-circle"></i> Aide</h4>
+            <div id="helpText">
+                Remplissez vos informations personnelles pour commencer votre inscription sur Lobiko Health.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialisation Select2
+    $('.select2').select2({
+        placeholder: "Choisissez les langues",
+        width: '100%',
+        allowClear: true
+    });
+    
+    // Initialisation du wizard
+    initializeWizard();
+    
+    // Organiser les champs par étapes
+    organizeFieldsBySteps();
+});
+
+// Fonction pour organiser les champs Django par étapes
+function organizeFieldsBySteps() {
+    // Étape 1: Informations personnelles
+    const step1Fields = ['prenom', 'nom', 'email', 'telephone', 'date_naissance', 'password1', 'password2'];
+    
+    // Étape 2: Informations professionnelles  
+    const step2Fields = ['specialite', 'numero_ordre', 'annees_experience', 'langues', 'adresse_cabinet', 'tarif_consultation'];
+    
+    // Étape 3: Finalisation
+    const step3Fields = ['bio', 'disponibilites'];
+    
+    // Organiser les champs dans les bonnes étapes
+    step1Fields.forEach(fieldName => {
+        const fieldElement = document.querySelector(`[data-field="${fieldName}"]`);
+        if (fieldElement) {
+            const step1Container = document.getElementById('step1');
+            const descriptionElement = step1Container.querySelector('.step-description');
+            
+            // Créer un conteneur pour les lignes de champs
+            let formRowContainer = step1Container.querySelector('.form-fields-container');
+            if (!formRowContainer) {
+                formRowContainer = document.createElement('div');
+                formRowContainer.className = 'form-fields-container';
+                step1Container.insertBefore(formRowContainer, step1Container.querySelector('.wizard-navigation') || step1Container.lastElementChild);
+            }
+            
+            // Organiser en lignes pour certains champs
+            if (fieldName === 'prenom') {
+                const formRow = document.createElement('div');
+                formRow.className = 'form-row';
+                formRowContainer.appendChild(formRow);
+                formRow.appendChild(fieldElement);
+            } else if (fieldName === 'nom') {
+                const formRow = formRowContainer.querySelector('.form-row:last-child');
+                if (formRow) {
+                    formRow.appendChild(fieldElement);
+                } else {
+                    formRowContainer.appendChild(fieldElement);
+                }
+            } else if (fieldName === 'telephone') {
+                const formRow = document.createElement('div');
+                formRow.className = 'form-row';
+                formRowContainer.appendChild(formRow);
+                formRow.appendChild(fieldElement);
+            } else if (fieldName === 'date_naissance') {
+                const formRow = formRowContainer.querySelector('.form-row:last-child');
+                if (formRow && formRow.children.length === 1) {
+                    formRow.appendChild(fieldElement);
+                } else {
+                    formRowContainer.appendChild(fieldElement);
+                }
+            } else if (fieldName === 'password1') {
+                const formRow = document.createElement('div');
+                formRow.className = 'form-row';
+                formRowContainer.appendChild(formRow);
+                formRow.appendChild(fieldElement);
+            } else if (fieldName === 'password2') {
+                const formRow = formRowContainer.querySelector('.form-row:last-child');
+                if (formRow && formRow.children.length === 1) {
+                    formRow.appendChild(fieldElement);
+                } else {
+                    formRowContainer.appendChild(fieldElement);
+                }
+            } else {
+                formRowContainer.appendChild(fieldElement);
+            }
+        }
+    });
+    
+    // Organiser l'étape 2
+    step2Fields.forEach(fieldName => {
+        const fieldElement = document.querySelector(`[data-field="${fieldName}"]`);
+        if (fieldElement) {
+            const step2Container = document.getElementById('step2');
+            let formRowContainer = step2Container.querySelector('.form-fields-container');
+            if (!formRowContainer) {
+                formRowContainer = document.createElement('div');
+                formRowContainer.className = 'form-fields-container';
+                step2Container.insertBefore(formRowContainer, step2Container.querySelector('.wizard-navigation') || step2Container.lastElementChild);
+            }
+            
+            // Organiser en lignes pour certains champs
+            if (fieldName === 'numero_ordre') {
+                const formRow = document.createElement('div');
+                formRow.className = 'form-row';
+                formRowContainer.appendChild(formRow);
+                formRow.appendChild(fieldElement);
+            } else if (fieldName === 'annees_experience') {
+                const formRow = formRowContainer.querySelector('.form-row:last-child');
+                if (formRow && formRow.children.length === 1) {
+                    formRow.appendChild(fieldElement);
+                } else {
+                    formRowContainer.appendChild(fieldElement);
+                }
+            } else {
+                formRowContainer.appendChild(fieldElement);
+            }
+        }
+    });
+    
+    // Organiser l'étape 3
+    step3Fields.forEach(fieldName => {
+        const fieldElement = document.querySelector(`[data-field="${fieldName}"]`);
+        if (fieldElement) {
+            const step3Container = document.getElementById('step3');
+            let formRowContainer = step3Container.querySelector('.form-fields-container');
+            if (!formRowContainer) {
+                formRowContainer = document.createElement('div');
+                formRowContainer.className = 'form-fields-container';
+                step3Container.insertBefore(formRowContainer, step3Container.querySelector('.registration-summary'));
+            }
+            formRowContainer.appendChild(fieldElement);
+        }
+    });
+}
+</script>
+{% endblock %}
+

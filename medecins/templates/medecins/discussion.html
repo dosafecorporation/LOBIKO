@@ -1,428 +1,1311 @@
-{% load static %}
-{% load custom_filters %}
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8" />
-    <title>Discussion - Lobiko</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="{% static 'medecins/style.css' %}" />
-    <style>
-        .message-container {
-            max-width: 70%;
-            margin-bottom: 1rem;
-        }
-        .message-time {
-            font-size: 0.75rem;
-            opacity: 0.7;
-        }
-        .call-actions {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .jitsi-btn {
-            margin-top: 10px;
-        }
-        .media-container {
-            text-align: center;
-            padding: 10px;
-        }
-        .media-container img, .media-container video {
-            max-width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .media-actions {
-            margin-top: 8px;
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-        }
-    </style>
-</head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container">
-    <a class="navbar-brand" href="#">Lobiko - Médecin</a>
-    <div>
-      <span class="navbar-text me-3">
-        Connecté en tant que Dr. {{ request.user.nom }} ({{ request.user.specialite }})
-      </span>
-      <a href="{% url 'logout_medecin' %}" class="btn btn-outline-danger">Déconnexion</a>
-    </div>
-  </div>
-</nav>
-
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Discussion avec {{ session.patient.nom_complet }}</h2>
-        <div>
-            <span class="badge bg-info">{{ session.patient.langues_display }}</span>
-        </div>
-    </div>
-    
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <p><strong>Téléphone :</strong> {{ session.patient.telephone }}</p>
-            <p><strong>Âge :</strong> {{ session.patient.age }} ans</p>
-            <p><strong>Sexe :</strong> {{ session.patient.get_sexe_display }}</p>
-        </div>
-        <div class="col-md-6">
-            <p><strong>Localisation :</strong> 
-                {{ session.patient.commune }}, 
-                {{ session.patient.quartier }}
-                {% if session.patient.avenue %}({{ session.patient.avenue }}){% endif %}
-            </p>
-            <p><strong>Début de session :</strong> {{ session.date_debut|date:"d/m/Y H:i" }}</p>
-            {% if session.date_fin %}
-                <p class="text-danger"><strong>Session terminée :</strong> {{ session.date_fin|date:"d/m/Y H:i" }}</p>
+    {% load static %}
+    {% load custom_filters %}
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Discussion - {{ session.patient.nom_complet }} | Lobiko</title>
+        
+        <!-- Styles -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="{% static 'css/lobiko-styles.css' %}">
+        <link rel="stylesheet" href="{% static 'css/discussion.css' %}">
+        <link rel="stylesheet" href="{% static 'css/discussions.css' %}">
+        <!-- Styles pour les prescriptions -->
+        <style>
+            
+        </style>
+        <script>
+            // CORRECTION: Récupération correcte des IDs depuis le contexte Django
+            const sessionId = {{ session.id|default:0 }};
+            
+            // CORRECTION: Récupération de l'ID du médecin selon la structure de votre modèle
+            {% if user.is_authenticated and user.medecin %}
+                const medecinId = {{ user.medecin.id }};
+            {% elif medecin %}
+                const medecinId = {{ medecin.id }};
+            {% else %}
+                const medecinId = 0;
             {% endif %}
-        </div>
-    </div>
-
-    <div class="chat-container border p-3 mb-4" style="height: 500px; overflow-y: auto; background-color: #f8f9fa;">
-        {% for msg in all_messages %}
-            <div class="d-flex flex-column {% if msg.emetteur_type == 'MEDECIN' %}align-items-end{% else %}align-items-start{% endif %}">
-                <div class="message-container">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="badge 
-                            {% if msg.emetteur_type == 'MEDECIN' %}bg-primary
-                            {% elif msg.emetteur_type == 'PATIENT' %}bg-success
-                            {% elif msg.emetteur_type == 'BOT' %}bg-secondary
-                            {% else %}bg-warning{% endif %}">
-                            
-                            {% if msg.emetteur_type == 'MEDECIN' %}Vous
-                            {% elif msg.emetteur_type == 'PATIENT' %}{{ session.patient.prenom }}
-                            {% elif msg.emetteur_type == 'BOT' %}Système
-                            {% else %}Inconnu{% endif %}
-                        </span>
-                        <span class="message-time">{{ msg.timestamp|date:"H:i d/m/Y" }}</span>
+            
+            // Debug pour vérifier les valeurs
+            console.log('🔍 Debug - Session ID:', sessionId, 'Medecin ID:', medecinId);
+            
+            // CORRECTION: Vérification que les IDs sont valides
+            if (sessionId === 0 || medecinId === 0) {
+                console.error('❌ ERREUR: IDs manquants - Session ID:', sessionId, 'Medecin ID:', medecinId);
+            }
+        </script>
+    </head>
+    <body>
+        <!-- En-tête Lobiko -->
+        <header class="lobiko-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="lobiko-logo">
+                        <img src="{% static 'images/lobiko.png' %}" alt="Logo Lobiko">
                     </div>
-                    
-                    <!-- Contenu du message ou média -->
-                    <div class="alert 
-                        {% if msg.emetteur_type == 'MEDECIN' %}alert-primary
-                        {% elif msg.emetteur_type == 'PATIENT' %}alert-success
-                        {% elif msg.emetteur_type == 'BOT' %}alert-secondary
-                        {% else %}alert-warning{% endif %}">
-                        
-                        {% if msg|class_name == 'MediaMessage' %}
-                            <!-- Affichage des médias -->
-                            {% if msg.media_type == 'image' %}
-                                <div class="media-container">
-                                    <img src="{{ msg.file_url }}" alt="Image envoyée par le patient" 
-                                        class="img-fluid rounded" style="max-height: 300px;">
-                                    <div class="mt-2">
-                                        <a href="{{ msg.file_url }}" target="_blank" class="btn btn-sm btn-outline-dark">
-                                            <i class="fas fa-expand"></i> Agrandir
-                                        </a>
-                                        <a href="{% url 'proxy_download' session.id msg.id %}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-download"></i> Télécharger
-                                        </a>
-                                    </div>
-                                </div>
-                            {% elif msg.media_type == 'audio' %}
-                                <div class="media-container">
-                                    <audio controls class="w-100">
-                                        <source src="{{ msg.file_url }}" type="{{ msg.mime_type }}">
-                                        Votre navigateur ne supporte pas l'élément audio.
-                                    </audio>
-                                    <div class="mt-2">
-                                        <a href="{% url 'proxy_download' session.id msg.id %}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-download"></i> Télécharger
-                                        </a>
-                                    </div>
-                                </div>
-                            {% elif msg.media_type == 'video' %}
-                                <div class="media-container">
-                                    <video controls class="w-100" style="max-height: 300px;">
-                                        <source src="{{ msg.file_url }}" type="{{ msg.mime_type }}">
-                                        Votre navigateur ne supporte pas l'élément vidéo.
-                                    </video>
-                                    <div class="mt-2">
-                                        <a href="{% url 'proxy_download' session.id msg.id %}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-download"></i> Télécharger
-                                        </a>
-                                    </div>
-                                </div>
-                            {% else %}
-                                <div class="media-container">
-                                    <i class="fas fa-file fa-2x mb-2"></i>
-                                    <p>{{ msg.file_name }}</p>
-                                    <a href="{% url 'proxy_download' session.id msg.id %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-download"></i> Télécharger
-                                    </a>
-                                </div>
-                            {% endif %}
-                        {% elif "Lien pour la consultation vidéo:" in msg.contenu %}
-                            <!-- Gestion des liens Jitsi (existant) -->
-                            <div>
-                                <p>{{ msg.contenu|linebreaksbr }}</p>
-                                <button onclick="joinJitsiCall('{{ msg.contenu|slice:"34:" }}')" 
-                                        class="btn btn-success jitsi-btn">
-                                    <i class="fas fa-video"></i> Rejoindre l'appel vidéo
-                                </button>
+                    <div style="color: white;">
+                        <h1 style="margin: 0; font-size: 1.8rem; font-weight: 600;">Lobiko</h1>
+                        <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">Plateforme de Santé Professionnelle</p>
+                    </div>
+                </div>
+                <nav style="display: flex; gap: 1rem;">
+                    <a href="{% url 'dashboard_medecin' %}" style="color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 20px; background: rgba(255,255,255,0.2); transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(0)'">
+                        <i class="fas fa-home"></i> Tableau de bord
+                    </a>
+                    <a href="{% url 'logout_medecin' %}" style="color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 20px; background: rgba(255,255,255,0.2); transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(0)'">
+                        <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    </a>
+                </nav>
+            </div>
+        </header>
+
+        <div class="discussion-container">
+            <!-- En-tête de la discussion -->
+            <div class="discussion-header">
+                <div class="patient-info">
+                    <div class="patient-avatar">
+                        {{ session.patient.prenom|first }}{{ session.patient.nom|first }}
+                    </div>
+                    <div class="patient-details">
+                        <h2>{{ session.patient.nom_complet }}</h2>
+                        <div class="patient-meta">
+                            <div class="meta-item">
+                                <i class="fas fa-phone"></i>
+                                <span>{{ session.patient.telephone }}</span>
                             </div>
+                            <div class="meta-item">
+                                <i class="fas fa-birthday-cake"></i>
+                                <span>{{ session.patient.age }} ans</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-venus-mars"></i>
+                                <span>{{ session.patient.get_sexe_display }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>{{ session.patient.commune }}, {{ session.patient.quartier }}</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-language"></i>
+                                <span>{{ session.patient.langues_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="discussion-actions">
+                        {% if not session.date_fin %}
+                            <span class="status-badge status-active">
+                                <i class="fas fa-circle"></i> En cours
+                            </span>
                         {% else %}
-                            <!-- Messages texte normaux -->
-                            {{ msg.contenu|linebreaksbr }}
+                            <span class="status-badge status-ended">
+                                <i class="fas fa-check-circle"></i> Terminée
+                            </span>
                         {% endif %}
                     </div>
                 </div>
             </div>
-        {% empty %}
-            <!-- Message vide (inchangé) -->
-        {% endfor %}
-    </div>
 
-    {% if not session.date_fin %}
-    <div class="call-actions">
-        <form method="POST" action="{% url 'initier_appel_jitsi' session.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-video"></i> Démarrer un appel vidéo
-            </button>
-        </form>
-    </div>
+            <!-- Zone de chat -->
+            <div class="chat-area">
+                <div class="messages-container" id="messagesContainer">
+                    {% for msg in all_messages %}
+                        <div class="message-group">
+                            <div class="message-bubble {% if msg.emetteur_type == 'MEDECIN' %}medecin{% elif msg.emetteur_type == 'PATIENT' %}patient{% else %}system{% endif %}">
+                                <div class="message-content {% if msg.emetteur_type == 'MEDECIN' %}medecin{% elif msg.emetteur_type == 'PATIENT' %}patient{% else %}system{% endif %}">
+                                    {% if msg|class_name == 'MediaMessage' %}
+                                    <!-- Affichage des médias -->
+                                    <div class="media-message">
+                                        {% if msg.media_type == 'image' %}
+                                            <div class="media-container">
+                                                <img src="{{ msg.file_url }}" alt="Image envoyée" loading="lazy">
+                                                <div class="media-actions">
+                                                    <a href="{{ msg.file_url }}" target="_blank" class="lobiko-btn lobiko-btn-sm lobiko-btn-outline">
+                                                        <i class="fas fa-expand"></i> Agrandir
+                                                    </a>
+                                                    <a href="{% url 'download_media' msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
+                                                        <i class="fas fa-download"></i> Télécharger
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {% elif msg.media_type == 'audio' %}
+                                            <div class="audio-container">
+                                                <audio controls>
+                                                    <source src="{{ msg.file_url }}" type="audio/mpeg">
+                                                    Votre navigateur ne supporte pas l'audio.
+                                                </audio>
+                                                <div class="media-actions">
+                                                    <a href="{% url 'download_media' msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
+                                                        <i class="fas fa-download"></i> Télécharger
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {% elif msg.media_type == 'video' %}
+                                            <div class="video-container">
+                                                <video controls width="300">
+                                                    <source src="{{ msg.file_url }}" type="video/mp4">
+                                                    Votre navigateur ne supporte pas la vidéo.
+                                                </video>
+                                                <div class="media-actions">
+                                                    <a href="{% url 'download_media' msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
+                                                        <i class="fas fa-download"></i> Télécharger
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {% elif msg.media_type == 'document' %}
+                                            <div class="document-container">
+                                                <div class="document-info">
+                                                    <i class="fas fa-file-alt"></i>
+                                                    <span>{{ msg.original_filename|default:"Document" }}</span>
+                                                </div>
+                                                <div class="media-actions">
+                                                    <a href="{{ msg.file_url }}" target="_blank" class="lobiko-btn lobiko-btn-sm lobiko-btn-outline">
+                                                        <i class="fas fa-eye"></i> Voir
+                                                    </a>
+                                                    <a href="{% url 'download_media' msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
+                                                        <i class="fas fa-download"></i> Télécharger
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {% endif %}
 
-    <form id="messageForm" method="POST" class="mb-3">
-        {% csrf_token %}
-        <div class="input-group">
-            {{ form.message }}
-            <button type="submit" class="btn btn-primary">Envoyer</button>
+                                        {% if msg.caption %}
+                                            <p class="media-caption">{{ msg.caption }}</p>
+                                        {% endif %}
+                                    </div>
+
+                                {% elif "Lien pour la consultation vidéo:" in msg.contenu %}
+                                    <!-- Gestion spécifique du lien Jitsi -->
+                                    <div class="jitsi-message">
+                                        <p>{{ msg.contenu|linebreaksbr }}</p>
+                                        <div class="media-actions">
+                                            <button onclick="joinJitsiCall('{{ msg.contenu|slice:'34:' }}')" 
+                                                    class="lobiko-btn lobiko-btn-sm lobiko-btn-success">
+                                                <i class="fas fa-video"></i> Rejoindre l'appel vidéo
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                {% else %}
+                                    <!-- Message texte normal -->
+                                    <p class="text-message">{{ msg.contenu|linebreaksbr }}</p>
+                                {% endif %}
+
+                                </div>
+                                <div class="message-time">
+                                    {{ msg.date_envoi|date:"H:i" }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Actions et formulaire de message -->
+                {% if not session.date_fin %}
+                    <div class="chat-input-area">
+                        <!-- Boutons d'action pour les prescriptions -->
+                        <div class="action-buttons" style="padding: 1rem; border-top: 1px solid #e9ecef; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <form method="POST" action="{% url 'initier_appel_jitsi' session.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="action-btn-prescription" id="appel">
+                                    <i class="fas fa-video"></i> Démarrer un appel vidéo
+                                </button>
+                            </form>
+                            <button class="action-btn-prescription" onclick="ouvrirModalPrescription()">
+                                <i class="fas fa-pills"></i> Créer une ordonnance
+                            </button>
+                            <button class="action-btn-examen" onclick="ouvrirModalBonExamen()">
+                                <i class="fas fa-microscope"></i> Prescrire des examens
+                            </button>
+                            <div class="text-center">
+                                <form method="POST" class="mb-3">
+                                    {% csrf_token %}
+                                    <button type="submit" name="close_session" class="action-btn-examen" id="termine">
+                                        <i class="fas fa-times-circle"></i> Terminer la discussion
+                                    </button>
+                                </form>
+                            </div>
+
+                        </div>
+
+                        <form id="messageForm" method="POST">
+                            {% csrf_token %}
+                            <div class="input-container">
+                                <textarea 
+                                    name="message" 
+                                    class="message-input" 
+                                    placeholder="Tapez votre message ici..."
+                                    rows="1"
+                                    required></textarea>
+                                <button type="submit" class="send-button">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="session-ended">
+                        <i class="fas fa-check-circle" style="font-size: 3rem; color: #4CAF50; margin-bottom: 1rem;"></i>
+                        <h3>Discussion terminée</h3>
+                        <p>Cette consultation s'est terminée le {{ session.date_fin|date:"d/m/Y à H:i" }}</p>
+                        <a href="{% url 'dashboard_medecin' %}" class="lobiko-btn lobiko-btn-primary">
+                            <i class="fas fa-home"></i> Retour au tableau de bord
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    </form>
-    <form method="POST" class="mb-3">
-        {% csrf_token %}
-        <div class="input-group">
-            <button type="submit" name="close_session" class="btn btn-danger">Terminer la discussion</button>
-        </div>
-    </form>
-    {% else %}
-        <div class="alert alert-warning text-center">
-            <i class="fas fa-exclamation-circle"></i> Cette discussion est terminée.
-            <a href="{% url 'dashboard_medecin' %}" class="alert-link">Retour au tableau de bord</a>
-        </div>
-    {% endif %}
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Auto-scroll vers le bas du chat
-    const chatContainer = document.querySelector('.chat-container');
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    
-    // Focus sur le champ de message
-    if (document.querySelector('textarea')) {
-        document.querySelector('textarea').focus();
-    }
+        <!-- Modales pour les prescriptions -->
+        <div id="prescriptionModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-pills"></i> Créer une Ordonnance</h3>
+                    <span class="close" onclick="fermerModalPrescription()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="prescriptionForm">
+                        <!-- Informations générales -->
+                        <div class="form-section">
+                            <h4><i class="fas fa-info-circle"></i> Informations générales</h4>
+                            <div class="form-group">
+                                <label for="diagnostic">Diagnostic <span class="required">*</span></label>
+                                <textarea id="diagnostic" name="diagnostic" rows="3" placeholder="Diagnostic principal..." required></textarea>
+                                <div class="error-message"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="motif_prescription">Motif de la prescription</label>
+                                <textarea id="motif_prescription" name="motif_prescription" rows="2" placeholder="Motif de la prescription..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="instructions_generales">Instructions générales</label>
+                                <textarea id="instructions_generales" name="instructions_generales" rows="3" placeholder="Instructions générales pour le patient..."></textarea>
+                            </div>
+                        </div>
 
-    // Fonction pour rejoindre l'appel Jitsi
-    function joinJitsiCall(linkPath) {
-        const newWindow = window.open(linkPath, '_blank');
-        
-        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-            // Si la fenêtre a été bloquée
-            alert("L'ouverture de la fenêtre a été bloquée. Veuillez autoriser les popups pour ce site.");
-            // Option alternative: redirection dans le même onglet
-            if (confirm("Voulez-vous être redirigé vers l'appel dans cet onglet ?")) {
-                window.location.href = fullLink;
+                        <!-- Médicaments -->
+                        <div class="form-section">
+                            <h4><i class="fas fa-pills"></i> Médicaments prescrits</h4>
+                            <div id="medicaments-container">
+                                <!-- Les médicaments seront ajoutés dynamiquement ici -->
+                            </div>
+                            <button type="button" class="btn btn-secondary" onclick="ajouterMedicament()">
+                                <i class="fas fa-plus"></i> Ajouter un médicament
+                            </button>
+                        </div>
+
+                        <!-- Validité -->
+                        <div class="form-section">
+                            <h4><i class="fas fa-calendar"></i> Validité</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="date_validite">Date de validité</label>
+                                    <input type="date" id="date_validite" name="date_validite">
+                                </div>
+                                <div class="form-group">
+                                    <label for="renouvelable">
+                                        <input type="checkbox" id="renouvelable" name="renouvelable">
+                                        Renouvelable
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="fermerModalPrescription()">Annuler</button>
+                    <button type="button" class="btn btn-primary" onclick="envoyerPrescription()">
+                        <i class="fas fa-paper-plane"></i> Envoyer l'ordonnance
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="bonExamenModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-microscope"></i> Créer un Bon d'Examens</h3>
+                    <span class="close" onclick="fermerModalBonExamen()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="bonExamenForm">
+                        <!-- Informations générales -->
+                        <div class="form-section">
+                            <h4><i class="fas fa-info-circle"></i> Informations générales</h4>
+                            <div class="form-group">
+                                <label for="motif_examens">Motif des examens <span class="required">*</span></label>
+                                <textarea id="motif_examens" name="motif_examens" rows="3" placeholder="Motif des examens demandés..." required></textarea>
+                                <div class="error-message"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="diagnostic_provisoire">Diagnostic provisoire</label>
+                                <textarea id="diagnostic_provisoire" name="diagnostic_provisoire" rows="2" placeholder="Diagnostic provisoire..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="renseignements_cliniques">Renseignements cliniques</label>
+                                <textarea id="renseignements_cliniques" name="renseignements_cliniques" rows="3" placeholder="Renseignements cliniques pertinents..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Priorité et délais -->
+                        <div class="form-section">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Priorité et délais</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="priorite">Priorité</label>
+                                    <select id="priorite" name="priorite">
+                                        <option value="NORMAL">Normal</option>
+                                        <option value="URGENT">Urgent</option>
+                                        <option value="TRES_URGENT">Très urgent</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="delai_realisation">Délai de réalisation</label>
+                                    <input type="text" id="delai_realisation" name="delai_realisation" placeholder="Ex: Dans les 48h">
+                                </div>
+                                <div class="form-group">
+                                    <label for="validite_jours">Validité (jours)</label>
+                                    <input type="number" id="validite_jours" name="validite_jours" value="60" min="1" max="365">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Examens -->
+                        <div class="form-section">
+                            <h4><i class="fas fa-microscope"></i> Examens prescrits</h4>
+                            <div id="examens-container">
+                                <!-- Les examens seront ajoutés dynamiquement ici -->
+                            </div>
+                            <button type="button" class="btn btn-secondary" onclick="ajouterExamen()">
+                                <i class="fas fa-plus"></i> Ajouter un examen
+                            </button>
+                        </div>
+
+                        <!-- Instructions de préparation -->
+                        <div class="form-section">
+                            <h4><i class="fas fa-clipboard-list"></i> Instructions de préparation</h4>
+                            <div class="form-group">
+                                <label for="instructions_preparation">Instructions spéciales</label>
+                                <textarea id="instructions_preparation" name="instructions_preparation" rows="4" placeholder="Instructions spéciales de préparation pour le patient..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="fermerModalBonExamen()">Annuler</button>
+                    <button type="button" class="btn btn-primary" onclick="envoyerBonExamen()">
+                        <i class="fas fa-paper-plane"></i> Envoyer le bon d'examens
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let discussionSocket = null;
+            let medicamentCounter = 0;
+            let examenCounter = 0;
+            let produitsPharmaceutiques = [];
+            let actesMedicaux = [];
+            
+            // Auto-scroll vers le bas du chat
+            function scrollToBottom() {
+                const container = document.getElementById('messagesContainer');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
             }
-        }
-    }
-    
-    document.getElementById('messageForm')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(this);
-        const messageInput = this.querySelector('textarea');
-        const messageContent = messageInput.value.trim();
-        
-        if (!messageContent) return;
-        
-        fetch(this.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'X-Requested-With': 'XMLHttpRequest'
+            
+            // Auto-resize du textarea
+            function autoResize(textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
             }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Network response was not ok');
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                // Ajouter le message à l'interface
-                addNewMessage({
-                    id: data.message_id,
-                    content: messageContent,
-                    sender: 'medecin',
-                    timestamp: data.timestamp,
-                    type: 'text'
+            
+            // Fonction de validation des champs requis
+            function validerChampRequis(element, nomChamp) {
+                const valeur = element.value.trim();
+                const errorElement = element.parentNode.querySelector('.error-message');
+                
+                if (!valeur) {
+                    element.classList.add('error');
+                    if (errorElement) {
+                        errorElement.textContent = `${nomChamp} est requis`;
+                        errorElement.classList.add('show');
+                    }
+                    return false;
+                } else {
+                    element.classList.remove('error');
+                    if (errorElement) {
+                        errorElement.classList.remove('show');
+                    }
+                    return true;
+                }
+            }
+
+            // Fonction pour rejoindre l'appel Jitsi
+            function joinJitsiCall(linkPath) {
+                const newWindow = window.open(linkPath, '_blank');
+                
+                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                    // Si la fenêtre a été bloquée
+                    alert("L'ouverture de la fenêtre a été bloquée. Veuillez autoriser les popups pour ce site.");
+                    // Option alternative: redirection dans le même onglet
+                    if (confirm("Voulez-vous être redirigé vers l'appel dans cet onglet ?")) {
+                        window.location.href = fullLink;
+                    }
+                }
+            }
+                
+            // Fonction pour créer un message d'erreur
+            function creerMessageErreur(element, message) {
+                let errorElement = element.parentNode.querySelector('.error-message');
+                if (!errorElement) {
+                    errorElement = document.createElement('div');
+                    errorElement.className = 'error-message';
+                    element.parentNode.appendChild(errorElement);
+                }
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+            }
+
+            // Système de notifications
+            function afficherNotification(message, type = 'info', duree = 3000) {
+                // Supprimer les notifications existantes
+                const notificationsExistantes = document.querySelectorAll('.notification-toast');
+                notificationsExistantes.forEach(notif => notif.remove());
+                
+                // Créer la nouvelle notification
+                const notification = document.createElement('div');
+                notification.className = `notification-toast notification-${type}`;
+                
+                const icones = {
+                    'success': '<i class="fas fa-check-circle"></i>',
+                    'error': '<i class="fas fa-exclamation-circle"></i>',
+                    'warning': '<i class="fas fa-exclamation-triangle"></i>',
+                    'info': '<i class="fas fa-info-circle"></i>'
+                };
+                
+                notification.innerHTML = `
+                    <div class="notification-content">
+                        ${icones[type] || icones.info}
+                        <span>${message}</span>
+                    </div>
+                    <button class="notification-close" onclick="this.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                // Styles CSS inline pour la notification
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : type === 'warning' ? '#ff9800' : '#2196F3'};
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 5px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    max-width: 400px;
+                    animation: slideInRight 0.3s ease-out;
+                `;
+                
+                // Ajouter au DOM
+                document.body.appendChild(notification);
+                
+                // Supprimer automatiquement après la durée spécifiée
+                if (duree > 0) {
+                    setTimeout(() => {
+                        if (notification.parentElement) {
+                            notification.style.animation = 'slideOutRight 0.3s ease-in';
+                            setTimeout(() => notification.remove(), 300);
+                        }
+                    }, duree);
+                }
+            }
+
+            // Fonctions utilitaires pour les actions PDF
+            function ouvrirPDF(url) {
+                if (!url || url === 'undefined') {
+                    afficherNotification('Erreur: URL du PDF non disponible', 'error');
+                    return;
+                }
+                
+                const nouvelleFenetre = window.open(url, '_blank');
+                
+                if (!nouvelleFenetre) {
+                    afficherNotification('Impossible d\'ouvrir le PDF. Vérifiez que les popups ne sont pas bloqués.', 'warning');
+                    window.location.href = url;
+                }
+            }
+
+            function telechargerPDF(url, nomFichier) {
+                if (!url || url === 'undefined') {
+                    afficherNotification('Erreur: URL du PDF non disponible', 'error');
+                    return;
+                }
+                
+                try {
+                    const lienTelechargement = document.createElement('a');
+                    lienTelechargement.href = url;
+                    lienTelechargement.download = nomFichier || 'document.pdf';
+                    lienTelechargement.style.display = 'none';
+                    
+                    document.body.appendChild(lienTelechargement);
+                    lienTelechargement.click();
+                    document.body.removeChild(lienTelechargement);
+                    
+                    afficherNotification('Téléchargement démarré', 'success');
+                    
+                } catch (error) {
+                    console.error('Erreur téléchargement:', error);
+                    afficherNotification('Erreur lors du téléchargement. Essayez d\'ouvrir le PDF puis de le sauvegarder.', 'error');
+                    ouvrirPDF(url);
+                }
+            }
+
+            function copierLienPDF(url) {
+                if (!url || url === 'undefined') {
+                    afficherNotification('Erreur: URL du PDF non disponible', 'error');
+                    return;
+                }
+                
+                const urlComplete = url.startsWith('http') ? url : `${window.location.origin}${url}`;
+                
+                try {
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(urlComplete).then(() => {
+                            afficherNotification('Lien copié dans le presse-papiers', 'success');
+                        }).catch(err => {
+                            console.error('Erreur copie clipboard:', err);
+                            copierLienFallback(urlComplete);
+                        });
+                    } else {
+                        copierLienFallback(urlComplete);
+                    }
+                } catch (error) {
+                    console.error('Erreur copie lien:', error);
+                    copierLienFallback(urlComplete);
+                }
+            }
+
+            function copierLienFallback(url) {
+                try {
+                    const champTemporaire = document.createElement('textarea');
+                    champTemporaire.value = url;
+                    champTemporaire.style.position = 'fixed';
+                    champTemporaire.style.left = '-999999px';
+                    champTemporaire.style.top = '-999999px';
+                    document.body.appendChild(champTemporaire);
+                    champTemporaire.focus();
+                    champTemporaire.select();
+                    
+                    const reussi = document.execCommand('copy');
+                    document.body.removeChild(champTemporaire);
+                    
+                    if (reussi) {
+                        afficherNotification('Lien copié dans le presse-papiers', 'success');
+                    } else {
+                        prompt('Copiez ce lien:', url);
+                    }
+                } catch (error) {
+                    console.error('Erreur copie fallback:', error);
+                    prompt('Copiez ce lien:', url);
+                }
+            }
+
+            // Génération des boutons d'action pour les prescriptions
+            function genererBoutonsActionsPrescription(data) {
+                const numero = data.numero || data.prescription_id || 'unknown';
+                const pdfUrl = data.pdf_url || data.url_finale || `/media/prescriptions/ordonnances/${numero}.pdf`;
+                
+                return `
+                    <button class="prescription-btn" onclick="ouvrirPDF('${pdfUrl}')">
+                        <i class="fas fa-file-pdf"></i> Voir le PDF
+                    </button>
+                    <button class="prescription-btn" onclick="telechargerPDF('${pdfUrl}', 'Ordonnance_${numero}.pdf')">
+                        <i class="fas fa-download"></i> Télécharger
+                    </button>
+                    <button class="prescription-btn" onclick="copierLienPDF('${pdfUrl}')">
+                        <i class="fas fa-link"></i> Copier le lien
+                    </button>
+                `;
+            }
+
+            // Génération des boutons d'action pour les bons d'examens
+            function genererBoutonsActionsBonExamen(data) {
+                const numero = data.numero || data.bon_examen_id || 'unknown';
+                const pdfUrl = data.pdf_url || data.url_finale || `/media/prescriptions/bons_examens/${numero}.pdf`;
+                
+                return `
+                    <button class="prescription-btn" onclick="ouvrirPDF('${pdfUrl}')">
+                        <i class="fas fa-file-pdf"></i> Voir le PDF
+                    </button>
+                    <button class="prescription-btn" onclick="telechargerPDF('${pdfUrl}', 'Bon_Examens_${numero}.pdf')">
+                        <i class="fas fa-download"></i> Télécharger
+                    </button>
+                    <button class="prescription-btn" onclick="copierLienPDF('${pdfUrl}')">
+                        <i class="fas fa-link"></i> Copier le lien
+                    </button>
+                `;
+            }
+
+            // Fonction pour ajouter des messages de prescription
+            function ajouterMessagePrescription(data) {
+                const container = document.getElementById('messagesContainer');
+                
+                const messageGroup = document.createElement('div');
+                messageGroup.className = 'message-group';
+                
+                const timeString = new Date().toLocaleTimeString('fr-FR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
                 });
                 
-                // Vider le champ et remettre le focus
-                messageInput.value = '';
-                messageInput.focus();
-            }
-        })
-    });
-
-    // Gestion de la fermeture de session avec AJAX
-    document.querySelector('form[action*="close_session"]')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        if (!confirm("Voulez-vous vraiment terminer cette consultation ?")) return;
-        
-        fetch(this.action, {
-            method: 'POST',
-            body: new FormData(this),
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (response.ok) {
-                window.location.reload(); // Recharger pour afficher le statut "terminé"
-            }
-        });
-    });
-
-    const sessionId = {{ session.id }};
-    const discussionSocket = new WebSocket(
-        'wss://' + window.location.host + '/ws/discussion/' + sessionId + '/'
-    );
-
-    // Gestion des erreurs
-    discussionSocket.onerror = function(error) {
-        console.error('WebSocket Error:', error);
-    };
-
-    // Notification de connexion
-    discussionSocket.onopen = function(e) {
-        console.log('WebSocket connecté avec succès');
-    };
-
-    discussionSocket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        
-        if (data.type === 'new_message') {
-            addNewMessage(data.data);
-        } else if (data.type === 'new_media') {
-            addNewMedia(data.data);
-        }
-    };
-
-    function addNewMessage(data) {
-        const chatContainer = document.querySelector('.chat-container');
-        
-        // Créer le HTML du message
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `d-flex flex-column ${data.sender === 'medecin' ? 'align-items-end' : 'align-items-start'}`;
-        
-        messageDiv.innerHTML = `
-            <div class="message-container">
-                <div class="d-flex justify-content-between mb-1">
-                    <span class="badge ${data.sender === 'medecin' ? 'bg-primary' : 'bg-success'}">
-                        ${data.sender === 'medecin' ? 'Vous' : 'Patient'}
-                    </span>
-                    <span class="message-time">${new Date(data.timestamp).toLocaleTimeString()}</span>
-                </div>
-                <div class="alert ${data.sender === 'medecin' ? 'alert-primary' : 'alert-success'}">
-                    ${data.content.replace(/\n/g, '<br>')}
-                </div>
-            </div>
-        `;
-        
-        chatContainer.appendChild(messageDiv);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    function addNewMedia(data) {
-        const chatContainer = document.querySelector('.chat-container');
-        
-        // Déterminer le contenu HTML en fonction du type de média
-        let mediaContent = '';
-        if (data.type === 'image') {
-            mediaContent = `
-                <div class="media-container">
-                    <img src="${data.url}" alt="Media envoyé" class="img-fluid rounded" style="max-height: 300px;">
-                    <div class="mt-2">
-                        <a href="${data.url}" target="_blank" class="btn btn-sm btn-outline-dark">
-                            <i class="fas fa-expand"></i> Agrandir
-                        </a>
-                        <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-download"></i> Télécharger
-                        </a>
+                let contenu = '';
+                let icone = '';
+                
+                // Gestion des différents types de prescription
+                if (data.type === 'prescription_medicament' || data.type === 'prescription_sent') {
+                    icone = '<i class="fas fa-pills"></i>';
+                    contenu = `
+                        <div class="prescription-message">
+                            <div class="prescription-header">
+                                ${icone} Ordonnance médicale envoyée
+                            </div>
+                            <div class="prescription-details">
+                                <strong>N° ${data.numero || 'N/A'}</strong><br>
+                                Médicaments prescrits: ${data.medicaments_count || 0}<br>
+                                Médecin: ${data.medecin || 'Dr Non spécifié'}
+                            </div>
+                            <div class="prescription-actions-msg">
+                                ${genererBoutonsActionsPrescription(data)}
+                            </div>
+                        </div>
+                    `;
+                } else if (data.type === 'bon_examen' || data.type === 'bon_examen_sent') {
+                    const prioriteEmoji = (data.priorite && data.priorite.includes('Urgent')) ? '⚠️' : '📋';
+                    icone = '<i class="fas fa-microscope"></i>';
+                    contenu = `
+                        <div class="prescription-message">
+                            <div class="prescription-header">
+                                ${icone} ${prioriteEmoji} Bon d'examens envoyé
+                            </div>
+                            <div class="prescription-details">
+                                <strong>N° ${data.numero || 'N/A'}</strong><br>
+                                Examens prescrits: ${data.examens_count || 0}<br>
+                                Priorité: ${data.priorite || 'Normal'}<br>
+                                Médecin: ${data.medecin || 'Dr Non spécifié'}
+                            </div>
+                            <div class="prescription-actions-msg">
+                                ${genererBoutonsActionsBonExamen(data)}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                messageGroup.innerHTML = `
+                    <div class="message-bubble medecin">
+                        <div class="message-content medecin">
+                            ${contenu}
+                        </div>
+                        <div class="message-time">
+                            ${timeString}
+                        </div>
                     </div>
-                </div>
-            `;
-        } else if (data.type === 'audio') {
-            mediaContent = `
-                <div class="media-container">
-                    <audio controls class="w-100">
-                        <source src="${data.url}" type="${data.mime_type}">
-                        Votre navigateur ne supporte pas l'élément audio.
-                    </audio>
-                    <div class="mt-2">
-                        <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-download"></i> Télécharger
-                        </a>
+                `;
+                
+                container.appendChild(messageGroup);
+                scrollToBottom();
+            }
+            
+            // Charger les données de référence
+            async function chargerDonneesReference() {
+                try {
+                    // Charger les produits pharmaceutiques
+                    const produitsResponse = await fetch('/api/produits-pharmaceutiques/');
+                    if (produitsResponse.ok) {
+                        produitsPharmaceutiques = await produitsResponse.json();
+                        console.log('✅ Produits pharmaceutiques chargés:', produitsPharmaceutiques.length);
+                    } else {
+                        console.warn('⚠️ Erreur chargement produits pharmaceutiques');
+                    }
+                    
+                    // Charger les actes médicaux
+                    const actesResponse = await fetch('/api/actes-medicaux/');
+                    if (actesResponse.ok) {
+                        actesMedicaux = await actesResponse.json();
+                        console.log('✅ Actes médicaux chargés:', actesMedicaux.length);
+                    } else {
+                        console.warn('⚠️ Erreur chargement actes médicaux');
+                    }
+                } catch (error) {
+                    console.error('❌ Erreur chargement données de référence:', error);
+                    // Utiliser des données de test si l'API n'est pas disponible
+                    produitsPharmaceutiques = [
+                        {id: '1', nom_commercial: 'Paracétamol', dosage: '500mg', forme: 'Comprimé', posologie_adulte: '1 à 2 comprimés, 3 fois par jour', duree_traitement_standard: '3 jours'},
+                        {id: '2', nom_commercial: 'Amoxicilline', dosage: '1g', forme: 'Comprimé', posologie_adulte: '1 comprimé matin et soir', duree_traitement_standard: '7 jours'}
+                    ];
+                    actesMedicaux = [
+                        {id: '1', nom: 'Numération Formule Sanguine', code: 'B020', categorie: 'BIOLOGIE', preparation_requise: 'Aucune préparation'},
+                        {id: '2', nom: 'Radiographie thoracique', code: 'ZBQK001', categorie: 'IMAGERIE', preparation_requise: 'Retirer bijoux métalliques'}
+                    ];
+                    console.log('📋 Utilisation des données de test');
+                }
+            }
+
+            // Fonctions pour les modales
+            function ouvrirModalPrescription() {
+                document.getElementById('prescriptionModal').style.display = 'flex';
+                // Réinitialiser le formulaire
+                document.getElementById('prescriptionForm').reset();
+                document.getElementById('medicaments-container').innerHTML = '';
+                medicamentCounter = 0;
+                // Ajouter un médicament par défaut
+                ajouterMedicament();
+            }
+
+            function fermerModalPrescription() {
+                document.getElementById('prescriptionModal').style.display = 'none';
+            }
+
+            function ouvrirModalBonExamen() {
+                document.getElementById('bonExamenModal').style.display = 'flex';
+                // Réinitialiser le formulaire
+                document.getElementById('bonExamenForm').reset();
+                document.getElementById('examens-container').innerHTML = '';
+                examenCounter = 0;
+                // Ajouter un examen par défaut
+                ajouterExamen();
+            }
+
+            function fermerModalBonExamen() {
+                document.getElementById('bonExamenModal').style.display = 'none';
+            }
+
+            // Fonction pour ajouter un médicament
+            function ajouterMedicament() {
+                medicamentCounter++;
+                const container = document.getElementById('medicaments-container');
+                
+                const medicamentDiv = document.createElement('div');
+                medicamentDiv.className = 'medicament-item';
+                medicamentDiv.id = `medicament-${medicamentCounter}`;
+                
+                let optionsProduits = '<option value="">Sélectionnez un médicament</option>';
+                produitsPharmaceutiques.forEach(produit => {
+                    optionsProduits += `<option value="${produit.id}" data-posologie="${produit.posologie_adulte || ''}" data-duree="${produit.duree_traitement_standard || ''}">${produit.nom_commercial} ${produit.dosage} (${produit.forme})</option>`;
+                });
+                
+                medicamentDiv.innerHTML = `
+                    <h5>
+                        Médicament ${medicamentCounter}
+                        <button type="button" class="remove-btn" onclick="supprimerMedicament(${medicamentCounter})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </h5>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Produit <span class="required">*</span></label>
+                            <select name="produit_${medicamentCounter}" onchange="remplirPosologieDefaut(this, ${medicamentCounter})" required>
+                                ${optionsProduits}
+                            </select>
+                            <div class="error-message"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Quantité</label>
+                            <input type="text" name="quantite_${medicamentCounter}" placeholder="Ex: 1 boîte, 30 comprimés">
+                        </div>
                     </div>
-                </div>
-            `;
-        } else if (data.type === 'video') {
-            mediaContent = `
-                <div class="media-container">
-                    <video controls class="w-100" style="max-height: 300px;">
-                        <source src="${data.url}" type="${data.mime_type}">
-                        Votre navigateur ne supporte pas l'élément vidéo.
-                    </video>
-                    <div class="mt-2">
-                        <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-download"></i> Télécharger
-                        </a>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Posologie <span class="required">*</span></label>
+                            <textarea name="posologie_${medicamentCounter}" rows="2" placeholder="Ex: 1 comprimé matin et soir" required></textarea>
+                            <div class="error-message"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Durée du traitement <span class="required">*</span></label>
+                            <input type="text" name="duree_traitement_${medicamentCounter}" placeholder="Ex: 7 jours" required>
+                            <div class="error-message"></div>
+                        </div>
                     </div>
-                </div>
-            `;
-        } else {
-            mediaContent = `
-                <div class="media-container">
-                    <i class="fas fa-file fa-2x mb-2"></i>
-                    <p>${data.name}</p>
-                    <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-download"></i> Télécharger
-                    </a>
-                </div>
-            `;
-        }
-        
-        // Créer le HTML du message média
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `d-flex flex-column ${data.sender === 'medecin' ? 'align-items-end' : 'align-items-start'}`;
-        
-        messageDiv.innerHTML = `
-            <div class="message-container">
-                <div class="d-flex justify-content-between mb-1">
-                    <span class="badge ${data.sender === 'medecin' ? 'bg-primary' : 'bg-success'}">
-                        ${data.sender === 'medecin' ? 'Vous' : 'Patient'}
-                    </span>
-                    <span class="message-time">${new Date(data.timestamp).toLocaleTimeString()}</span>
-                </div>
-                <div class="alert ${data.sender === 'medecin' ? 'alert-primary' : 'alert-success'}">
-                    ${mediaContent}
-                </div>
-            </div>
-        `;
-        
-        chatContainer.appendChild(messageDiv);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-</script>
-</body>
-</html>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Modalités de prise</label>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <input type="checkbox" name="avant_repas_${medicamentCounter}"> Avant repas
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <input type="checkbox" name="avec_repas_${medicamentCounter}"> Avec repas
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <input type="checkbox" name="apres_repas_${medicamentCounter}"> Après repas
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Instructions spécifiques</label>
+                        <textarea name="instructions_${medicamentCounter}" rows="2" placeholder="Instructions spécifiques pour ce médicament..."></textarea>
+                    </div>
+                `;
+                
+                container.appendChild(medicamentDiv);
+            }
+
+            // Fonction pour supprimer un médicament
+            function supprimerMedicament(id) {
+                const element = document.getElementById(`medicament-${id}`);
+                if (element) {
+                    element.remove();
+                }
+            }
+
+            // Fonction pour remplir la posologie par défaut
+            function remplirPosologieDefaut(selectElement, medicamentId) {
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                const posologieDefaut = selectedOption.getAttribute('data-posologie');
+                const dureeDefaut = selectedOption.getAttribute('data-duree');
+                
+                if (posologieDefaut) {
+                    const posologieField = document.querySelector(`textarea[name="posologie_${medicamentId}"]`);
+                    if (posologieField && !posologieField.value) {
+                        posologieField.value = posologieDefaut;
+                    }
+                }
+                
+                if (dureeDefaut) {
+                    const dureeField = document.querySelector(`input[name="duree_traitement_${medicamentId}"]`);
+                    if (dureeField && !dureeField.value) {
+                        dureeField.value = dureeDefaut;
+                    }
+                }
+            }
+
+            // Fonction pour ajouter un examen
+            function ajouterExamen() {
+                examenCounter++;
+                const container = document.getElementById('examens-container');
+                
+                const examenDiv = document.createElement('div');
+                examenDiv.className = 'examen-item';
+                examenDiv.id = `examen-${examenCounter}`;
+                
+                let optionsActes = '<option value="">Sélectionnez un examen</option>';
+                
+                // Grouper par catégorie
+                const categories = {};
+                actesMedicaux.forEach(acte => {
+                    if (!categories[acte.categorie]) {
+                        categories[acte.categorie] = [];
+                    }
+                    categories[acte.categorie].push(acte);
+                });
+                
+                Object.keys(categories).forEach(categorie => {
+                    optionsActes += `<optgroup label="${categorie}">`;
+                    categories[categorie].forEach(acte => {
+                        optionsActes += `<option value="${acte.id}" data-preparation="${acte.preparation_requise || ''}">${acte.nom} (${acte.code})</option>`;
+                    });
+                    optionsActes += '</optgroup>';
+                });
+                
+                examenDiv.innerHTML = `
+                    <h5>
+                        Examen ${examenCounter}
+                        <button type="button" class="remove-btn" onclick="supprimerExamen(${examenCounter})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </h5>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Acte médical <span class="required">*</span></label>
+                            <select name="acte_${examenCounter}" onchange="remplirPreparationDefaut(this, ${examenCounter})" required>
+                                ${optionsActes}
+                            </select>
+                            <div class="error-message"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Localisation</label>
+                            <input type="text" name="localisation_${examenCounter}" placeholder="Ex: genou droit, thorax">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Instructions spécifiques</label>
+                            <textarea name="instructions_specifiques_${examenCounter}" rows="2" placeholder="Instructions spécifiques pour cet examen..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" name="urgent_${examenCounter}"> Examen urgent
+                            </label>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(examenDiv);
+            }
+
+            // Fonction pour supprimer un examen
+            function supprimerExamen(id) {
+                const element = document.getElementById(`examen-${id}`);
+                if (element) {
+                    element.remove();
+                }
+            }
+
+            // Fonction pour remplir la préparation par défaut
+            function remplirPreparationDefaut(selectElement, examenId) {
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                const preparationDefaut = selectedOption.getAttribute('data-preparation');
+                
+                if (preparationDefaut) {
+                    const instructionsField = document.querySelector(`textarea[name="instructions_specifiques_${examenId}"]`);
+                    if (instructionsField && !instructionsField.value) {
+                        instructionsField.value = `Préparation: ${preparationDefaut}`;
+                    }
+                }
+            }
+
+            // CORRECTION: Fonction pour envoyer la prescription avec validation des IDs
+            async function envoyerPrescription() {
+                try {
+                    // CORRECTION: Vérification des IDs avant envoi
+                    if (sessionId === 0 || medecinId === 0) {
+                        afficherNotification('Erreur: Données de session manquantes. Veuillez recharger la page.', 'error');
+                        console.error('❌ IDs manquants - Session ID:', sessionId, 'Medecin ID:', medecinId);
+                        return;
+                    }
+                    
+                    // Validation des champs requis
+                    const diagnostic = document.getElementById('diagnostic');
+                    let isValid = true;
+                    
+                    if (!validerChampRequis(diagnostic, 'Diagnostic')) {
+                        isValid = false;
+                    }
+                    
+                    // Valider les médicaments
+                    const medicamentsContainer = document.getElementById('medicaments-container');
+                    const medicamentItems = medicamentsContainer.querySelectorAll('.medicament-item');
+                    
+                    if (medicamentItems.length === 0) {
+                        afficherNotification('Veuillez ajouter au moins un médicament', 'error');
+                        return;
+                    }
+                    
+                    const medicaments = [];
+                    medicamentItems.forEach((item, index) => {
+                        const id = item.id.split('-')[1];
+                        const produitSelect = item.querySelector(`select[name="produit_${id}"]`);
+                        const posologieTextarea = item.querySelector(`textarea[name="posologie_${id}"]`);
+                        const dureeInput = item.querySelector(`input[name="duree_traitement_${id}"]`);
+                        
+                        if (!validerChampRequis(produitSelect, 'Produit')) {
+                            isValid = false;
+                        }
+                        if (!validerChampRequis(posologieTextarea, 'Posologie')) {
+                            isValid = false;
+                        }
+                        if (!validerChampRequis(dureeInput, 'Durée du traitement')) {
+                            isValid = false;
+                        }
+                        
+                        if (produitSelect.value && posologieTextarea.value && dureeInput.value) {
+                            medicaments.push({
+                                produit_id: parseInt(produitSelect.value),
+                                quantite: item.querySelector(`input[name="quantite_${id}"]`).value || '',
+                                posologie: posologieTextarea.value,
+                                duree_traitement: dureeInput.value,
+                                instructions: item.querySelector(`textarea[name="instructions_${id}"]`).value || '',
+                                avant_repas: item.querySelector(`input[name="avant_repas_${id}"]`).checked,
+                                avec_repas: item.querySelector(`input[name="avec_repas_${id}"]`).checked,
+                                apres_repas: item.querySelector(`input[name="apres_repas_${id}"]`).checked,
+                                substitution_autorisee: true
+                            });
+                        }
+                    });
+                    
+                    if (!isValid) {
+                        afficherNotification('Veuillez corriger les erreurs dans le formulaire', 'error');
+                        return;
+                    }
+                    
+                    if (medicaments.length === 0) {
+                        afficherNotification('Veuillez remplir au moins un médicament correctement', 'error');
+                        return;
+                    }
+                    
+                    // Préparer les données
+                    const prescriptionData = {
+                        diagnostic: diagnostic.value,
+                        motif: document.getElementById('motif_prescription').value || '',
+                        instructions_generales: document.getElementById('instructions_generales').value || '',
+                        date_validite: document.getElementById('date_validite').value || '',
+                        renouvellement_autorise: document.getElementById('renouvelable').checked,
+                        medicaments: medicaments
+                    };
+                    
+                    // CORRECTION: Structure des données conforme aux attentes de la vue Django
+                    const requestData = {
+                        session_id: sessionId,
+                        medecin_id: medecinId,
+                        prescription_data: prescriptionData
+                    };
+                    
+                    console.log('📤 Envoi des données:', requestData);
+                    
+                    // Envoyer la requête
+                    const response = await fetch('/api/creer-prescription/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    const result = await response.json();
+                    console.log('📥 Réponse reçue:', result);
+                    
+                    if (result.status === 'success') {
+                        afficherNotification('Ordonnance créée et envoyée avec succès!', 'success');
+                        fermerModalPrescription();
+                        
+                        // Ajouter le message dans le chat
+                        ajouterMessagePrescription({
+                            type: 'prescription_medicament',
+                            numero: result.numero,
+                            medicaments_count: medicaments.length,
+                            medecin: result.medecin,
+                            pdf_url: result.pdf_url
+                        });
+                    } else {
+                        afficherNotification(`Erreur: ${result.message}`, 'error');
+                        console.error('❌ Erreur serveur:', result);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Erreur envoi prescription:', error);
+                    afficherNotification('Erreur lors de l\'envoi de la prescription', 'error');
+                }
+            }
+
+            // CORRECTION: Fonction pour envoyer le bon d'examens avec validation des IDs
+            async function envoyerBonExamen() {
+                try {
+                    // CORRECTION: Vérification des IDs avant envoi
+                    if (sessionId === 0 || medecinId === 0) {
+                        afficherNotification('Erreur: Données de session manquantes. Veuillez recharger la page.', 'error');
+                        console.error('❌ IDs manquants - Session ID:', sessionId, 'Medecin ID:', medecinId);
+                        return;
+                    }
+                    
+                    // Validation des champs requis
+                    const motifExamens = document.getElementById('motif_examens');
+                    let isValid = true;
+                    
+                    if (!validerChampRequis(motifExamens, 'Motif des examens')) {
+                        isValid = false;
+                    }
+                    
+                    // Valider les examens
+                    const examensContainer = document.getElementById('examens-container');
+                    const examenItems = examensContainer.querySelectorAll('.examen-item');
+                    
+                    if (examenItems.length === 0) {
+                        afficherNotification('Veuillez ajouter au moins un examen', 'error');
+                        return;
+                    }
+                    
+                    const examens = [];
+                    examenItems.forEach((item, index) => {
+                        const id = item.id.split('-')[1];
+                        const acteSelect = item.querySelector(`select[name="acte_${id}"]`);
+                        
+                        if (!validerChampRequis(acteSelect, 'Acte médical')) {
+                            isValid = false;
+                        }
+                        
+                        if (acteSelect.value) {
+                            examens.push({
+                                acte_id: parseInt(acteSelect.value),
+                                localisation: item.querySelector(`input[name="localisation_${id}"]`).value || '',
+                                instructions_specifiques: item.querySelector(`textarea[name="instructions_specifiques_${id}"]`).value || '',
+                                urgent: item.querySelector(`input[name="urgent_${id}"]`).checked
+                            });
+                        }
+                    });
+                    
+                    if (!isValid) {
+                        afficherNotification('Veuillez corriger les erreurs dans le formulaire', 'error');
+                        return;
+                    }
+                    
+                    if (examens.length === 0) {
+                        afficherNotification('Veuillez sélectionner au moins un examen', 'error');
+                        return;
+                    }
+                    
+                    // Calculer la date de validité
+                    const validiteJours = parseInt(document.getElementById('validite_jours').value) || 60;
+                    const dateValidite = new Date();
+                    dateValidite.setDate(dateValidite.getDate() + validiteJours);
+                    
+                    // Préparer les données
+                    const bonExamenData = {
+                        motif: motifExamens.value,
+                        diagnostic_provisoire: document.getElementById('diagnostic_provisoire').value || '',
+                        renseignements_cliniques: document.getElementById('renseignements_cliniques').value || '',
+                        instructions_preparation: document.getElementById('instructions_preparation').value || '',
+                        priorite: document.getElementById('priorite').value,
+                        delai_realisation: document.getElementById('delai_realisation').value || '',
+                        date_validite: dateValidite.toISOString().split('T')[0],
+                        examens: examens
+                    };
+                    
+                    // CORRECTION: Structure des données conforme aux attentes de la vue Django
+                    const requestData = {
+                        session_id: sessionId,
+                        medecin_id: medecinId,
+                        bon_examen_data: bonExamenData
+                    };
+                    
+                    console.log('📤 Envoi des données bon d\'examens:', requestData);
+                    
+                    // Envoyer la requête
+                    const response = await fetch('/api/creer-bon-examen/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    const result = await response.json();
+                    console.log('📥 Réponse bon d\'examens reçue:', result);
+                    
+                    if (result.status === 'success') {
+                        afficherNotification('Bon d\'examens créé et envoyé avec succès!', 'success');
+                        fermerModalBonExamen();
+                        
+                        // Ajouter le message dans le chat
+                        ajouterMessagePrescription({
+                            type: 'bon_examen',
+                            numero: result.numero,
+                            examens_count: examens.length,
+                            priorite: bonExamenData.priorite,
+                            medecin: result.medecin,
+                            pdf_url: result.pdf_url
+                        });
+                    } else {
+                        afficherNotification(`Erreur: ${result.message}`, 'error');
+                        console.error('❌ Erreur serveur bon d\'examens:', result);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Erreur envoi bon d\'examens:', error);
+                    afficherNotification('Erreur lors de l\'envoi du bon d\'examens', 'error');
+                }
+            }
+            
+            // Initialisation WebSocket
+            function initializeWebSocket() {
+                try {
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const wsUrl = `${protocol}//${window.location.host}/ws/discussion/${sessionId}/`;
+                    
+                    discussionSocket = new WebSocket(wsUrl);
+                    
+                    discussionSocket.onopen = function(e) {
+                        console.log('✅ WebSocket connecté avec succès');
+                    };
+                    
+                    discussionSocket.onmessage = function(e) {
+                        try {
+                            const data = JSON.parse(e.data);
+                            console.log('📨 Message WebSocket reçu:', data);
+                            
+                            if (data.type === 'prescription_sent' || data.type === 'bon_examen_sent') {
+                                ajouterMessagePrescription(data.data);
+                            } else if (data.type === 'message') {
+                                // Recharger la page pour afficher le nouveau message
+                                location.reload();
+                            }
+                        } catch (error) {
+                            console.error('Erreur parsing message WebSocket:', error);
+                        }
+                    };
+                    
+                    discussionSocket.onclose = function(e) {
+                        console.log('🔌 WebSocket fermé. Tentative de reconnexion dans 3 secondes...');
+                        setTimeout(initializeWebSocket, 3000);
+                    };
+                    
+                    discussionSocket.onerror = function(e) {
+                        console.error('❌ Erreur WebSocket:', e);
+                    };
+                    
+                } catch (error) {
+                    console.error('❌ Erreur initialisation WebSocket:', error);
+                }
+            }
+            
+            // Initialisation
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('🚀 Initialisation de la page discussion');
+                console.log('📊 Variables globales - Session ID:', sessionId, 'Medecin ID:', medecinId);
+                
+                scrollToBottom();
+                chargerDonneesReference();
+                
+                // Focus sur le champ de message
+                const messageInput = document.querySelector('.message-input');
+                if (messageInput) {
+                    messageInput.focus();
+                    
+                    // Auto-resize du textarea
+                    messageInput.addEventListener('input', function() {
+                        autoResize(this);
+                    });
+                    
+                    // Envoi avec Ctrl+Enter
+                    messageInput.addEventListener('keydown', function(e) {
+                        if (e.ctrlKey && e.key === 'Enter') {
+                            e.preventDefault();
+                            document.getElementById('messageForm').dispatchEvent(new Event('submit'));
+                        }
+                    });
+                }
+                
+                // Initialiser WebSocket seulement si sessionId est valide
+                if (sessionId > 0) {
+                    initializeWebSocket();
+                } else {
+                    console.warn('⚠️ WebSocket non initialisé - Session ID invalide');
+                }
+                
+                // Fermer les modales en cliquant à l'extérieur
+                window.addEventListener('click', function(e) {
+                    const prescriptionModal = document.getElementById('prescriptionModal');
+                    const bonExamenModal = document.getElementById('bonExamenModal');
+                    
+                    if (e.target === prescriptionModal) {
+                        fermerModalPrescription();
+                    }
+                    if (e.target === bonExamenModal) {
+                        fermerModalBonExamen();
+                    }
+                });
+            });
+        </script>
+    </body>
+    </html>
+

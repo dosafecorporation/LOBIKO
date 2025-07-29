@@ -157,7 +157,8 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="#" class="btn btn-outline">Voir détails</a>
+                            <a href="{% url 'discussion_session' session.id %}" class="btn btn-outline">Voir détails</a>
+                          
                         </td>
                     </tr>
                     {% empty %}

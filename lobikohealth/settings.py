@@ -32,6 +32,16 @@ ALLOWED_HOSTS = ["lobiko.onrender.com", "127.0.0.1"]
 
 # Application definition
 
+
+# Configuration pour websocket
+ASGI_APPLICATION = 'lobikohealth.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
+
 INSTALLED_APPS = [
     'daphne',
     'channels',
@@ -168,14 +178,78 @@ AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400', # Exemple: met en cache les fichiers pendant 24h
     'ContentDisposition': 'attachment', # C'est la ligne clé !
 }
+
+ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN', '')
+PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID', '')
+
+# Configuration des médias (QR codes, documents temporaires)
+if not hasattr(locals(), 'MEDIA_ROOT'):
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    MEDIA_URL = '/media/'
+
+os.makedirs(MEDIA_ROOT, exist_ok=True)
+
+
+TELEMEDICINE_S3_CONFIG = {
+    'AWS_ACCESS_KEY_ID': AWS_ACCESS_KEY_ID,
+    'AWS_SECRET_ACCESS_KEY': AWS_SECRET_ACCESS_KEY,
+    'AWS_STORAGE_BUCKET_NAME': AWS_STORAGE_BUCKET_NAME,
+    'AWS_S3_REGION_NAME': AWS_S3_REGION_NAME,
+    'AWS_S3_CUSTOM_DOMAIN': AWS_S3_CUSTOM_DOMAIN,
+    
+    # Paramètres spécifiques pour les prescriptions médicales
+    'PRESCRIPTIONS_FOLDER': 'prescriptions/',  # Dossier dédié dans votre bucket
+    'QR_CODES_FOLDER': 'qr_codes/',           # Dossier pour les QR codes
+    
+    # Paramètres de sécurité renforcés pour les données médicales
+    'PRESCRIPTION_OBJECT_PARAMETERS': {
+        'CacheControl': 'max-age=3600',        # Cache plus court
+        'ContentDisposition': 'attachment',     # Force le téléchargement
+        'ContentType': 'application/pdf',       # Type MIME pour PDF
+        'ServerSideEncryption': 'AES256',       # Chiffrement côté serveur
+        'Metadata': {
+            'document-type': 'medical-prescription',
+            'created-by': 'lobiko-telemedicine'
+        }
+    },
+    
+    # URLs avec votre domaine personnalisé
+    'USE_CUSTOM_DOMAIN': True,
+    'SIGNED_URLS': False,  # Utilise vos paramètres existants
+}
+
+# Configuration de sécurité pour les prescriptions
+PRESCRIPTION_ENCRYPTION_KEY = os.environ.get('PRESCRIPTION_ENCRYPTION_KEY', 'default-key-change-in-production')
+
+# Configuration des logs pour la télémédecine
+# Configuration de logging (optionnel mais recommandé)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'lobiko.telemedicine': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
+# Créer le répertoire de logs s'il n'existe pas
+os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
+
+
 # Stockage des médias
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-# Configuration pour websocket
-ASGI_APPLICATION = 'lobikohealth.asgi.application'
-
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    },
-}
