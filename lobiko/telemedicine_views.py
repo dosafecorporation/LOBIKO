@@ -30,8 +30,8 @@ class WhatsAppService:
     """Service pour envoyer des messages et documents via WhatsApp Business API"""
     
     def __init__(self):
-        self.access_token = getattr(settings, 'WHATSAPP_ACCESS_TOKEN', '')
-        self.phone_number_id = getattr(settings, 'WHATSAPP_PHONE_NUMBER_ID', '')
+        self.access_token = getattr(settings, 'ACCESS_TOKEN', '')
+        self.phone_number_id = getattr(settings, 'PHONE_NUMBER_ID', '')
         self.api_url = f"https://graph.facebook.com/v18.0/{self.phone_number_id}/messages"
         
         if not self.access_token or not self.phone_number_id:
