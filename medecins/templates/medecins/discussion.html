@@ -125,7 +125,7 @@
                                                     <a href="{{ msg.file_url }}" target="_blank" class="lobiko-btn lobiko-btn-sm lobiko-btn-outline">
                                                         <i class="fas fa-expand"></i> Agrandir
                                                     </a>
-                                                    <a href="{% url 'proxy_download' msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
+                                                    <a href="{% url 'proxy_download' session.id msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
                                                         <i class="fas fa-download"></i> Télécharger
                                                     </a>
                                                 </div>
@@ -137,7 +137,7 @@
                                                     Votre navigateur ne supporte pas l'audio.
                                                 </audio>
                                                 <div class="media-actions">
-                                                    <a href="{% url 'proxy_download' msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
+                                                    <a href="{% url 'proxy_download' session.id msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
                                                         <i class="fas fa-download"></i> Télécharger
                                                     </a>
                                                 </div>
@@ -149,7 +149,7 @@
                                                     Votre navigateur ne supporte pas la vidéo.
                                                 </video>
                                                 <div class="media-actions">
-                                                    <a href="{% url 'proxy_download' msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
+                                                    <a href="{% url 'proxy_download' session.id msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
                                                         <i class="fas fa-download"></i> Télécharger
                                                     </a>
                                                 </div>
@@ -164,7 +164,7 @@
                                                     <a href="{{ msg.file_url }}" target="_blank" class="lobiko-btn lobiko-btn-sm lobiko-btn-outline">
                                                         <i class="fas fa-eye"></i> Voir
                                                     </a>
-                                                    <a href="{% url 'proxy_download' msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
+                                                    <a href="{% url 'proxy_download' session.id msg.id %}" class="lobiko-btn lobiko-btn-sm lobiko-btn-primary">
                                                         <i class="fas fa-download"></i> Télécharger
                                                     </a>
                                                 </div>
