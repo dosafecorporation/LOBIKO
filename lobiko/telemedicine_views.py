@@ -1,6 +1,7 @@
 import json
 import boto3
 import requests
+import logging
 from datetime import datetime, timedelta
 from django.http import JsonResponse, HttpResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
@@ -25,7 +26,7 @@ from .telemedicine_utils import (
     debug_ordonnance_medicaments
 )
 
-
+logger = logging.getLogger(__name__)
 class WhatsAppService:
     """Service pour envoyer des messages et documents via WhatsApp Business API"""
     
@@ -73,17 +74,22 @@ class WhatsAppService:
         except Exception as e:
             print(f"❌ Erreur WhatsApp: {e}")
             return None
-    
+
     def envoyer_document(self, numero_patient, url_document, nom_fichier, caption=""):
-        """Envoie un document PDF via WhatsApp"""
+        """Envoie un document PDF via WhatsApp avec journalisation complète"""
         try:
-            # Nettoyer le numéro (enlever espaces, tirets, etc.)
-            numero_clean = ''.join(filter(str.isdigit, numero_patient))
+            logger.info(f"Début d'envoi de document - Numéro: {numero_patient}, Fichier: {nom_fichier}")
             
-            # Ajouter l'indicatif pays si manquant (243)
+            # 1. Nettoyage du numéro
+            numero_clean = ''.join(filter(str.isdigit, numero_patient))
+            logger.debug(f"Numéro nettoyé: {numero_clean}")
+            
+            # 2. Ajout indicatif pays
             if not numero_clean.startswith('243'):
                 numero_clean = '243' + numero_clean
+                logger.debug(f"Indicatif ajouté - Numéro final: {numero_clean}")
             
+            # 3. Préparation requête
             headers = {
                 'Authorization': f'Bearer {self.access_token}',
                 'Content-Type': 'application/json'
@@ -100,17 +106,27 @@ class WhatsAppService:
                 }
             }
             
-            response = requests.post(self.api_url, headers=headers, json=data)
+            logger.debug(f"Données préparées - URL: {url_document}, Headers: {headers.keys()}")
             
+            # 4. Envoi requête
+            logger.info(f"Envoi du document à {numero_clean} via {self.api_url}")
+            response = requests.post(self.api_url, headers=headers, json=data)
+            logger.debug(f"Réponse API - Status: {response.status_code}")
+            
+            # 5. Traitement réponse
             if response.status_code == 200:
-                print(f"✅ Document WhatsApp envoyé à {numero_clean}: {nom_fichier}")
+                logger.info(f"Document envoyé avec succès à {numero_clean}")
                 return response.json()
-            else:
-                print(f"❌ Erreur envoi document WhatsApp: {response.status_code} - {response.text}")
-                return None
                 
+            logger.error(f"Erreur API - Status: {response.status_code}, Response: {response.text}")
+            return None
+                
+        except requests.exceptions.RequestException as re:
+            logger.error(f"Erreur réseau - Type: {type(re).__name__}, Message: {str(re)}", exc_info=True)
+            return None
+            
         except Exception as e:
-            print(f"❌ Erreur envoi document WhatsApp: {e}")
+            logger.critical(f"Erreur inattendue - Type: {type(e).__name__}", exc_info=True)
             return None
     
     def envoyer_prescription_complete(self, patient, type_prescription, numero, url_pdf, nom_fichier):
