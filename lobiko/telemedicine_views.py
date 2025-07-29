@@ -118,7 +118,7 @@ class WhatsAppService:
                 logger.info(f"Document envoyé avec succès à {numero_clean}")
                 return response.json()
                 
-            logger.error(f"Erreur API - Status: {response.status_code}, Response: {response.text}")
+            logger.error(f"Erreur API - Status: {response.status_code}, Response: {response.text}, chemin : {url_document}")
             return None
                 
         except requests.exceptions.RequestException as re:
