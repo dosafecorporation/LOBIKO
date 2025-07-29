@@ -77,10 +77,12 @@ class WhatsAppService:
     def envoyer_document(self, numero_patient, url_document, nom_fichier, caption=""):
         """Envoie un document PDF via WhatsApp"""
         try:
-            # Nettoyer le numéro
+            # Nettoyer le numéro (enlever espaces, tirets, etc.)
             numero_clean = ''.join(filter(str.isdigit, numero_patient))
-            if not numero_clean.startswith('225'):
-                numero_clean = '225' + numero_clean
+            
+            # Ajouter l'indicatif pays si manquant (243)
+            if not numero_clean.startswith('243'):
+                numero_clean = '243' + numero_clean
             
             headers = {
                 'Authorization': f'Bearer {self.access_token}',
