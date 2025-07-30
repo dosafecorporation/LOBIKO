@@ -345,6 +345,18 @@ def webhook(request):
                         active_session.date_fin = now()
                         active_session.save()
                         send_whatsapp_message(from_number, "✅ Consultation terminée. Merci !")
+
+                        send_discussion_update(
+                            session_id=active_session.id,
+                            message_type='message',
+                            data={
+                                'id': str(uuid.uuid4()),
+                                'content': "Le patient a arrêté la consultation plus aucun message ne lui sera transmis. Merci pour cette consultation",
+                                'sender': 'patient',
+                                'timestamp': str(now()),
+                                'type': 'text'
+                            }
+                        )
                         return JsonResponse({"status": "session ended"})
                     
                     # Enregistrer le message

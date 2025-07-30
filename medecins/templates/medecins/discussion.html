@@ -1345,9 +1345,6 @@
                         <div class="message-content ${senderClass}">
                             ${messageContent}
                         </div>
-                        <div class="message-time">
-                            ${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </div>
                     </div>
                 `;
                 
@@ -1435,9 +1432,6 @@
                                 ${mediaContent}
                                 ${data.caption ? `<p class="media-caption">${data.caption}</p>` : ''}
                             </div>
-                        </div>
-                        <div class="message-time">
-                            ${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </div>
                     </div>
                 `;
