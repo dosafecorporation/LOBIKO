@@ -125,23 +125,6 @@ class DiscussionConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"Erreur handler bon_examen_sent: {e}")
 
-    # Handler pour les nouveaux médias
-    async def new_media(self, event):
-        media_data = event.get('data', {})
-        
-        await self.send(text_data=json.dumps({
-            'type': 'new_media',
-            'data': {
-                'id': media_data.get('id', ''),
-                'url': media_data.get('url', ''),
-                'type': media_data.get('type', ''),
-                'name': media_data.get('name', ''),
-                'sender': media_data.get('sender', 'system'),
-                'timestamp': media_data.get('timestamp', ''),
-                'mime_type': media_data.get('mime_type', '')
-            }
-        }))
-
     # NOUVEAU: Handler générique pour les erreurs
     async def error_message(self, event):
         """
@@ -244,50 +227,3 @@ async def envoyer_erreur_websocket(session_id, message_erreur, code_erreur="ERRO
     except Exception as e:
         logger.error(f"Erreur envoi message d'erreur: {e}")
     
-
-
-
-
-
-
-
-
-class DiscussionConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.session_id = self.scope['url_route']['kwargs']['session_id']
-        self.room_group_name = f"discussion_{self.session_id}"
-
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
-        await self.accept()
-
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
-
-    async def receive(self, text_data):
-        pass
-
-    async def discussion_message(self, event):
-        message = event['message']
-        await self.send(text_data=json.dumps({
-            'message': message
-        }))
-
-    async def new_message(self, event):
-        # Envoie les messages aux clients
-        await self.send(text_data=json.dumps({
-            'type': 'new_message',
-            'data': event['data']
-        }))
-
-    async def new_media(self, event):
-        # Envoie les médias aux clients
-        await self.send(text_data=json.dumps({
-            'type': 'new_media',
-            'data': event['data']
-        }))

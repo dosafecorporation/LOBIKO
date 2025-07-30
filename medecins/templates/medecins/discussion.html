@@ -1235,6 +1235,10 @@
                             
                             if (data.type === 'prescription_sent' || data.type === 'bon_examen_sent') {
                                 ajouterMessagePrescription(data.data);
+                            } else if (data.type === 'new_message') {
+                                addNewMessage(data.data);
+                            } else if (data.type === 'new_media') {
+                                addNewMedia(data.data);
                             } else if (data.type === 'message') {
                                 // Recharger la page pour afficher le nouveau message
                                 location.reload();
@@ -1257,6 +1261,8 @@
                     console.error('❌ Erreur initialisation WebSocket:', error);
                 }
             }
+
+            
             
             // Initialisation
             document.addEventListener('DOMContentLoaded', function() {
@@ -1305,6 +1311,112 @@
                     }
                 });
             });
+
+                function addNewMessage(data) {
+                    const chatContainer = document.querySelector('.chat-container');
+                    
+                    // Créer le HTML du message
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `d-flex flex-column ${data.sender === 'medecin' ? 'align-items-end' : 'align-items-start'}`;
+                    
+                    messageDiv.innerHTML = `
+                        <div class="message-container">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="badge ${data.sender === 'medecin' ? 'bg-primary' : 'bg-success'}">
+                                    ${data.sender === 'medecin' ? 'Vous' : 'Patient'}
+                                </span>
+                                <span class="message-time">${new Date(data.timestamp).toLocaleTimeString()}</span>
+                            </div>
+                            <div class="alert ${data.sender === 'medecin' ? 'alert-primary' : 'alert-success'}">
+                                ${data.content.replace(/\n/g, '<br>')}
+                            </div>
+                        </div>
+                    `;
+                    
+                    chatContainer.appendChild(messageDiv);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+
+                function addNewMedia(data) {
+                    const chatContainer = document.querySelector('.chat-container');
+                    
+                    // Déterminer le contenu HTML en fonction du type de média
+                    let mediaContent = '';
+                    if (data.type === 'image') {
+                        mediaContent = `
+                            <div class="media-container">
+                                <img src="${data.url}" alt="Media envoyé" class="img-fluid rounded" style="max-height: 300px;">
+                                <div class="mt-2">
+                                    <a href="${data.url}" target="_blank" class="btn btn-sm btn-outline-dark">
+                                        <i class="fas fa-expand"></i> Agrandir
+                                    </a>
+                                    <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download"></i> Télécharger
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    } else if (data.type === 'audio') {
+                        mediaContent = `
+                            <div class="media-container">
+                                <audio controls class="w-100">
+                                    <source src="${data.url}" type="${data.mime_type}">
+                                    Votre navigateur ne supporte pas l'élément audio.
+                                </audio>
+                                <div class="mt-2">
+                                    <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download"></i> Télécharger
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    } else if (data.type === 'video') {
+                        mediaContent = `
+                            <div class="media-container">
+                                <video controls class="w-100" style="max-height: 300px;">
+                                    <source src="${data.url}" type="${data.mime_type}">
+                                    Votre navigateur ne supporte pas l'élément vidéo.
+                                </video>
+                                <div class="mt-2">
+                                    <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download"></i> Télécharger
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        mediaContent = `
+                            <div class="media-container">
+                                <i class="fas fa-file fa-2x mb-2"></i>
+                                <p>${data.name}</p>
+                                <a href="/medecins/download/${sessionId}/${data.id}/" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download"></i> Télécharger
+                                </a>
+                            </div>
+                        `;
+                    }
+                    
+                    // Créer le HTML du message média
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `d-flex flex-column ${data.sender === 'medecin' ? 'align-items-end' : 'align-items-start'}`;
+                    
+                    messageDiv.innerHTML = `
+                        <div class="message-container">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="badge ${data.sender === 'medecin' ? 'bg-primary' : 'bg-success'}">
+                                    ${data.sender === 'medecin' ? 'Vous' : 'Patient'}
+                                </span>
+                                <span class="message-time">${new Date(data.timestamp).toLocaleTimeString()}</span>
+                            </div>
+                            <div class="alert ${data.sender === 'medecin' ? 'alert-primary' : 'alert-success'}">
+                                ${mediaContent}
+                            </div>
+                        </div>
+                    `;
+                    
+                    chatContainer.appendChild(messageDiv);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
         </script>
     </body>
     </html>
