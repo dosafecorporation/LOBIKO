@@ -139,7 +139,7 @@ def accepter_session(request, session_id):
         specialite = f", {medecin.specialite}" if getattr(medecin, 'specialite', None) else ""
         
         patient_message = (
-            f"Bonjour, vous êtes maintenant en contact avec {medecin_nom}{specialite}.\n"
+            f"Vous êtes maintenant en contact avec {medecin_nom}{specialite}.\n"
             "Tous vos messages à partir de maintenant lui sont directement transmis et il vous contatera dans un instant😊."
         )
 

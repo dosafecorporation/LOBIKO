@@ -1,3 +1,4 @@
+from datetime import date
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password, check_password
@@ -125,6 +126,12 @@ class Patient(models.Model):
         return f"{self.nom} {self.postnom} {self.prenom}".strip()
     
     @property
+    def age(self):
+        today = date.today()
+        return today.year - self.date_naissance.year - (
+            (today.month, today.day) < (self.date_naissance.month, self.date_naissance.day)
+        )
+    
     def langues_display(self):
         if not self.langue_preferee:
             return "Non spécifié"
