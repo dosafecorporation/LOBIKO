@@ -139,8 +139,8 @@ def accepter_session(request, session_id):
         specialite = f", {medecin.specialite}" if getattr(medecin, 'specialite', None) else ""
         
         patient_message = (
-            f"Vous êtes maintenant en contact avec {medecin_nom}{specialite}.\n"
-            "Tous vos messages à partir de maintenant lui sont directement transmis et il vous contatera dans un instant😊."
+            f"You are now in contact with {medecin_nom}{specialite}.\n"
+            "All your messages from now on will be sent directly to them, and they will contact you shortly😊."
         )
 
         # Envoi du message WhatsApp
@@ -187,7 +187,7 @@ def discussion_session(request, session_id):
             notification_data = {
                 'medecin_id': medecin_id,
                 'session_id': session_id,
-                'message': "Le médecin a clôturé la consultation.",
+                'message': "The doctor closed the consultation.",
                 'is_notification': True,
                 'action': 'close_session'
             }
@@ -265,7 +265,7 @@ def initier_appel_jitsi(request, session_id):
 
     # Génération du lien Jitsi
     jitsi_link = generate_jitsi_link(session, medecin)
-    message_content = f"🔊 Lien pour la consultation vidéo: {jitsi_link}"
+    message_content = f"🔊 Link for video consultation: {jitsi_link}"
 
     # Préparation des données pour le bot
     bot_url = request.build_absolute_uri(reverse('bot:recevoir_message_medecin'))

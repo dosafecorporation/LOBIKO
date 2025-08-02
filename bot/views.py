@@ -90,12 +90,12 @@ def handle_patient_registration(from_number, content):
     if state.get('step') == 'awaiting_nom':
         temp_data['nom'] = content
         state.update({'step': 'awaiting_postnom', 'temp_data': temp_data})
-        return "Merci ! Veuillez entrer votre Postnom :"
+        return "Thank you! Please enter your last name :"
     
     elif state.get('step') == 'awaiting_postnom':
         temp_data['postnom'] = content
         state.update({'step': 'awaiting_prenom', 'temp_data': temp_data})
-        return "Merci ! Veuillez entrer votre Prénom :"
+        return "Thank you! Please enter your first name :"
     
     elif state.get('step') == 'awaiting_prenom':
         temp_data['prenom'] = content
@@ -104,7 +104,7 @@ def handle_patient_registration(from_number, content):
             'temp_data': temp_data
         })
         sex_options = "/".join([label for code, label in Choices.SEXE])
-        return f"Merci ! Veuillez indiquer votre sexe ({sex_options}) :"
+        return f"Thank you! Please indicate your gender ({sex_options}) :"
     
     elif state.get('step') == 'awaiting_sexe':
         sexe = content.upper()[:1]  # Prend la première lettre majuscule
@@ -113,7 +113,7 @@ def handle_patient_registration(from_number, content):
         
         temp_data['sexe'] = sexe
         state.update({'step': 'awaiting_date_naissance', 'temp_data': temp_data})
-        return "Merci ! Veuillez entrer votre date de naissance (AAAA-MM-JJ) :"
+        return "Thank you! Please enter your date of birth (YYYY-MM-DD) :"
     
     elif state.get('step') == 'awaiting_date_naissance':
         if not is_valid_date(content):
@@ -125,7 +125,7 @@ def handle_patient_registration(from_number, content):
             'temp_data': temp_data
         })
         civil_options = ", ".join([label for label, _ in Choices.ETAT_CIVIL])
-        return f"Merci ! Veuillez indiquer votre état civil ({civil_options}) :"
+        return f"Thank you! Please indicate your marital status ({civil_options}) :"
     
     elif state.get('step') == 'awaiting_etat_civil':
         # Prend la première lettre en majuscule
@@ -152,7 +152,7 @@ def handle_patient_registration(from_number, content):
         temp_data['etat_civil'] = selected_etat
         state.update({'step': 'awaiting_commune', 'temp_data': temp_data})
         commune_options = "\n".join([f"- {label}" for label, _ in Choices.COMMUNE])
-        return f"Merci ! Dans quelle commune habitez-vous ?\n{commune_options}"
+        return f"Thank you! Which commune do you live in ?\n{commune_options}"
     
     elif state.get('step') == 'awaiting_commune':
         input_commune = content.strip().lower()
@@ -165,12 +165,12 @@ def handle_patient_registration(from_number, content):
         
         temp_data['commune'] = selected_commune
         state.update({'step': 'awaiting_quartier', 'temp_data': temp_data})
-        return "Merci ! Veuillez indiquer votre quartier :"
+        return "Thank you! Please indicate your neighborhood :"
     
     elif state.get('step') == 'awaiting_quartier':
         temp_data['quartier'] = content
         state.update({'step': 'awaiting_avenue', 'temp_data': temp_data})
-        return "Merci ! Veuillez indiquer votre avenue/rue :"
+        return "Thank you! Please indicate your street/avenue :"
     
     elif state.get('step') == 'awaiting_avenue':
         temp_data['avenue'] = content if content else None
@@ -179,7 +179,7 @@ def handle_patient_registration(from_number, content):
             'temp_data': temp_data
         })
         langue_options = ", ".join([label for code, label in Choices.LANGUES])
-        return f"Merci ! Quelle est votre langue préférée ? ({langue_options})"
+        return f"Thank you! What is your preferred language ? ({langue_options})"
     
     elif state.get('step') == 'awaiting_langue':
         # Prend les 2 premières lettres en minuscules
@@ -218,7 +218,7 @@ def handle_patient_registration(from_number, content):
             if from_number in registration_timers:
                 registration_timers[from_number].cancel()
                 registration_timers.pop(from_number, None)
-            return f"✅ Inscription réussie, {temp_data['prenom']} ! Merci d'avoir choisi Lobiko Health, vous pouvez nous envoyer un message si vous désirez consulter un médecin"
+            return f"✅ Registration successful, {temp_data['prenom']}! Thank you for choosing Lobiko Health. You can send us a message anytime if you wish to consult a doctor."
         except Exception as e:
             logger.error(f"Erreur création patient: {str(e)}")
             users_state.pop(from_number, None)
@@ -309,11 +309,11 @@ def webhook(request):
 
                 # Vérifie si on attend une confirmation de consultation
                 if users_state.get(from_number, {}).get('step') == 'awaiting_medecin_confirmation':
-                    if content == 'oui':
+                    if content == 'yes':
                         if not active_session:
                             session = create_patient_session(patient)
                             send_dashboard_update()
-                            send_whatsapp_message(from_number, "✅ Votre demande a été enregistrée. Un médecin va vous contacter. Tapez 'stop consultation' pour annuler.")
+                            send_whatsapp_message(from_number, "✅ Your request has been recorded. A doctor will contact you. Type 'stop consultation' to cancel.")
                         else:
                             send_whatsapp_message(from_number, "✅ Votre demande est déjà en cours. Un médecin va vous répondre.")
                     else:
@@ -374,8 +374,8 @@ def webhook(request):
                 }
                 send_whatsapp_message(
                     from_number,
-                    f"👋 Bonjour {patient.prenom} ! Souhaitez-vous consulter un médecin ?\n"
-                    "Répondez par 'oui' pour confirmer ou 'stop' pour annuler."
+                    f"👋 Hello {patient.prenom} ! Would you like to consult a doctor ?\n"
+                    "Please reply with 'yes' to confirm or 'stop' to cancel."
                 )
                 return JsonResponse({"status": "awaiting consultation confirmation"})
 
@@ -387,7 +387,7 @@ def webhook(request):
                     'last_updated': now()
                 }
                 start_registration_timer(from_number)
-                send_whatsapp_message(from_number, "👋 Bonjour ! Pour nous permettre de mieux vous prendre en charge, veuillez répondre à ces quelques questions. Pour commencer, quel est votre Nom ? (Tapez 'stop' pour annuler)")
+                send_whatsapp_message(from_number, "👋 Hello! To help us take better care of you, please answer a few questions. To begin, what is your name? (Type 'stop' to cancel)")
                 return JsonResponse({"status": "registration started"})
 
             # Gestion des étapes d'inscription
