@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 import requests
 from django.contrib import messages as django_messages
 from botocore.exceptions import ClientError
+from bot.views import send_whatsapp_message
 from lobikohealth import settings
 from .forms import MedecinInscriptionForm, MedecinLoginForm, MessageForm
 from lobiko.models import Medecin, MediaMessage, Message, SessionDiscussion,TarifConsultation
@@ -131,6 +132,20 @@ def accepter_session(request, session_id):
         session.save()
         # Rediriger vers la page de discussion avec ce patient
         send_dashboard_update()
+
+        # Préparation du message cordial pour le patient
+        patient_tel = session.patient.telephone
+        medecin_nom = f"Dr {medecin.prenom} {medecin.nom}"
+        specialite = f", {medecin.specialite}" if getattr(medecin, 'specialite', None) else ""
+        
+        patient_message = (
+            f"Bonjour, vous êtes maintenant en contact avec {medecin_nom}{specialite}.\n"
+            "Tous vos messages à partir de maintenant lui sont directement transmis et il vous contatera dans un instant😊."
+        )
+
+        # Envoi du message WhatsApp
+        send_whatsapp_message(patient_tel, patient_message)
+        
         return redirect('discussion_session', session_id=session.id)
 
     # Sinon on revient au dashboard
