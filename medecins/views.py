@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 import requests
 from django.contrib import messages as django_messages
 from botocore.exceptions import ClientError
-from bot.views import send_whatsapp_message
+from bot.utils import send_whatsapp_message
 from lobikohealth import settings
 from .forms import MedecinInscriptionForm, MedecinLoginForm, MessageForm
 from lobiko.models import Medecin, MediaMessage, Message, SessionDiscussion,TarifConsultation

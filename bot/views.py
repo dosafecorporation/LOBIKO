@@ -6,6 +6,7 @@ import logging
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.utils.timezone import now, timedelta
+from bot.utils import send_whatsapp_message
 from lobiko.models import Medecin, MediaMessage, Message, Patient, SessionDiscussion, Choices
 from django.conf import settings
 from datetime import datetime
@@ -38,24 +39,6 @@ def is_valid_date(date_string):
         return True
     except ValueError:
         return False
-
-def send_whatsapp_message(to, message):
-    url = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
-    headers = {
-        "Authorization": f"Bearer {ACCESS_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "messaging_product": "whatsapp",
-        "to": to,
-        "text": {"body": message}
-    }
-    try:
-        resp = requests.post(url, json=data, headers=headers)
-        resp.raise_for_status()
-        logger.info(f"Message envoyé à {to}")
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Erreur envoi message: {str(e)}")
 
 def create_patient_session(patient):
     """Crée une nouvelle session de discussion pour un patient"""
